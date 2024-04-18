@@ -1,8 +1,10 @@
 package edu.aav66;
 
 import java.awt.*;
+import java.awt.Graphics;
 import java.awt.event.*;
 import java.awt.event.KeyEvent;
+import java.awt.image.BufferedImage;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -124,8 +126,8 @@ public class GamePanel extends JPanel implements ActionListener
     private int ufoSpeed = 2; // Speed can be adjusted for difficulty
     private boolean ufoActive = false;
     private Timer ufoTimer;
-    private final int UFO_INTERVAL = 20000;                   // 20 seconds between appearances
-    private final Color UFO_COLOR = new Color( 128, 0, 128 ); // Purple color
+    private final int UFO_INTERVAL = 20000; // 20 seconds between appearances
+    // private final Color UFO_COLOR = new Color( 128, 0, 128 ); // Purple color
 
     // Constants for font sizes
     private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );
@@ -279,30 +281,42 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void draw( Graphics g )
     {
-        // Draw ship
-        g.setColor( SHIP_COLOR );
-        g.fillRect( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE, UNIT_SIZE, UNIT_SIZE );
+        // Draw the player's ship
+        BufferedImage playerShipImage = Helpers.getPlayerShip();
+        if ( playerShipImage != null )
+        {
+            g.drawImage( playerShipImage, xOfShip[0], SCREEN_HEIGHT - playerShipImage.getHeight(), this );
+        }
 
-        // Draw aliens dynamically
+        // Draw aliens
         for ( int i = 0; i < xOfAliens.size(); i++ )
         {
-            Color alienColor;
-            // Assuming still rows of 11, adjust if your structure changes
+            BufferedImage alienImage;
             int row = i / 11;
             if ( row == 0 )
             {
-                alienColor = SMALL_ALIEN_COLOR; // Top row - small aliens
+                alienImage = Helpers.getYellowAlien(); // Small aliens
             }
             else if ( row < 3 )
             {
-                alienColor = MEDIUM_ALIEN_COLOR; // Middle rows - medium aliens
+                alienImage = Helpers.getRedAlien(); // Medium aliens
             }
             else
             {
-                alienColor = LARGE_ALIEN_COLOR; // Bottom rows - large aliens
+                alienImage = Helpers.getGreenAlien(); // Large aliens
             }
-            g.setColor( alienColor );
-            g.fillRect( xOfAliens.get( i ), yOfAliens.get( i ), UNIT_SIZE, UNIT_SIZE );
+
+            if ( alienImage != null )
+            {
+                g.drawImage( alienImage, xOfAliens.get( i ), yOfAliens.get( i ), this );
+            }
+        }
+
+        // Draw UFO
+        BufferedImage ufoImage = Helpers.getUfo();
+        if ( ufoImage != null && ufoActive )
+        {
+            g.drawImage( ufoImage, ufoX, ufoY, this );
         }
 
         // Draw ship bullets
@@ -321,12 +335,6 @@ public class GamePanel extends JPanel implements ActionListener
                 g.setColor( Color.orange );
                 g.fillOval( exp.location.x, exp.location.y, UNIT_SIZE, UNIT_SIZE ); // Simple explosion effect
             }
-        }
-
-        if ( ufoActive )
-        {
-            g.setColor( UFO_COLOR );
-            g.fillRect( ufoX, ufoY, UNIT_SIZE * 2, UNIT_SIZE ); // Make UFO a bit larger
         }
     }
 

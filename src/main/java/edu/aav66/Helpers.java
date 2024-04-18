@@ -1,5 +1,7 @@
 package edu.aav66;
 
+import java.awt.Graphics2D;
+import java.awt.image.BufferedImage;
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileInputStream;
@@ -7,16 +9,80 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
+import javax.imageio.ImageIO;
 import javazoom.jl.player.Player;
 
 class Helpers
 {
+    private static BufferedImage yellowAlien;
+    private static BufferedImage redAlien;
+    private static BufferedImage greenAlien;
+    private static BufferedImage ufo;
+    private static BufferedImage playerShip;
+
     private static final String resourcesPath = "/Users/andreaventi/Developer/AlienInvaders/src/main/resources/";
-    private static final String trackPath = resourcesPath + "DRIVE(chosic.com).mp3";
 
     private static String highScorePath;
     private static final String devPath = resourcesPath + "highscore.txt";
     private static final String prodPath = "highscore.txt";
+
+    private static final String trackPath = resourcesPath + "DRIVE(chosic.com).mp3";
+
+    private static final String yellowAlienPath = resourcesPath + "yellow.png";
+    private static final String redAlienPath = resourcesPath + "red.png";
+    private static final String greenAlienPath = resourcesPath + "green.png";
+    private static final String ufoPath = resourcesPath + "ufo.png";
+    private static final String playerShipPath = resourcesPath + "player.png";
+
+    static { loadSprites(); }
+
+    /**
+     * Loads sprite images from files.
+     */
+
+    static void loadSprites()
+    {
+        try
+        {
+            yellowAlien = ImageIO.read( new File( yellowAlienPath ) );
+            redAlien = ImageIO.read( new File( redAlienPath ) );
+            greenAlien = ImageIO.read( new File( greenAlienPath ) );
+            playerShip = ImageIO.read( new File( playerShipPath ) );
+            BufferedImage originalUfo = ImageIO.read( new File( ufoPath ) );
+            ufo = resizeImage( originalUfo, GamePanel.UNIT_SIZE * 2, GamePanel.UNIT_SIZE ); // Resize UFO image
+        }
+        catch ( IOException e )
+        {
+            System.err.println( "Error loading sprite images." );
+            e.printStackTrace();
+        }
+    }
+
+    /**
+     * Resizes an image to the given width and height.
+     * @param originalImage The original image to resize.
+     * @param targetWidth The desired width.
+     * @param targetHeight The desired height.
+     * @return A new BufferedImage instance with the specified dimensions.
+     */
+    public static BufferedImage resizeImage( BufferedImage originalImage, int targetWidth, int targetHeight )
+    {
+        BufferedImage resizedImage = new BufferedImage( targetWidth, targetHeight, BufferedImage.TYPE_INT_ARGB );
+        Graphics2D graphics2D = resizedImage.createGraphics();
+        graphics2D.drawImage( originalImage, 0, 0, targetWidth, targetHeight, null );
+        graphics2D.dispose();
+        return resizedImage;
+    }
+
+    public static BufferedImage getYellowAlien() { return yellowAlien; }
+
+    public static BufferedImage getRedAlien() { return redAlien; }
+
+    public static BufferedImage getGreenAlien() { return greenAlien; }
+
+    public static BufferedImage getUfo() { return ufo; }
+
+    public static BufferedImage getPlayerShip() { return playerShip; }
 
     /**
      * Plays background music from a specified file path. This method runs
