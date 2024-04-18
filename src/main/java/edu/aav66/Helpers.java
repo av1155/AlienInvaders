@@ -7,12 +7,11 @@ import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.Scanner;
-
 import javazoom.jl.player.Player;
 
 class Helpers
 {
-    private static final String resourcesPath = "/Users/andreaventi/Developer/2D-Game/src/main/resources/";
+    private static final String resourcesPath = "/Users/andreaventi/Developer/AlienInvaders/src/main/resources/";
     private static final String trackPath = resourcesPath + "DRIVE(chosic.com).mp3";
 
     private static String highScorePath;
@@ -25,26 +24,26 @@ class Helpers
      */
     static void playMusic()
     {
-        new Thread(new Runnable()
-        {
+        new Thread( new Runnable() {
             public void run()
             {
                 try
                 {
-                    while (true)
+                    while ( true )
                     { // Loop to allow the music to replay indefinitely
-                        FileInputStream fileInputStream = new FileInputStream(trackPath);
-                        Player player = new Player(fileInputStream);
+                        FileInputStream fileInputStream = new FileInputStream( trackPath );
+                        Player player = new Player( fileInputStream );
                         player.play();
                         player.close();
                     }
-                } catch (Exception e)
+                }
+                catch ( Exception e )
                 {
-                    System.err.println("Problem playing file " + trackPath);
+                    System.err.println( "Problem playing file " + trackPath );
                     e.printStackTrace();
                 }
             }
-        }).start();
+        } ).start();
     }
 
     /**
@@ -53,9 +52,9 @@ class Helpers
      * development path exists; if not, it uses the production path. It then reads the
      * high score from the determined file.
      */
-    static int initializeHighScore(int highScore)
+    static int initializeHighScore( int highScore )
     {
-        highScorePath = new File(devPath).exists() ? devPath : prodPath;
+        highScorePath = new File( devPath ).exists() ? devPath : prodPath;
         highScore = readHighScore();
         return highScore;
     }
@@ -66,14 +65,15 @@ class Helpers
      * during the file writing process, such as an IOException, the error is logged and the stack
      * trace is printed. This ensures that the application can gracefully handle file system issues.
      */
-    static void writeHighScore(int highScore)
+    static void writeHighScore( int highScore )
     {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(highScorePath)))
+        try ( BufferedWriter writer = new BufferedWriter( new FileWriter( highScorePath ) ) )
         {
-            writer.write(Integer.toString(highScore));
-        } catch (IOException e)
+            writer.write( Integer.toString( highScore ) );
+        }
+        catch ( IOException e )
         {
-            System.err.println("Problem writing high score file " + highScorePath);
+            System.err.println( "Problem writing high score file " + highScorePath );
             e.printStackTrace();
         }
     }
@@ -89,16 +89,17 @@ class Helpers
      */
     static int readHighScore()
     {
-        File file = new File(highScorePath);
-        if (!file.exists())
+        File file = new File( highScorePath );
+        if ( !file.exists() )
             return 0;
 
-        try (Scanner scanner = new Scanner(file))
+        try ( Scanner scanner = new Scanner( file ) )
         {
             return scanner.hasNextInt() ? scanner.nextInt() : 0;
-        } catch (FileNotFoundException e)
+        }
+        catch ( FileNotFoundException e )
         {
-            System.err.println("High score file not found: " + highScorePath);
+            System.err.println( "High score file not found: " + highScorePath );
             e.printStackTrace();
             return 0;
         }

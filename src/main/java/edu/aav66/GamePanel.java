@@ -3,9 +3,12 @@ package edu.aav66;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.ArrayDeque;
+import java.util.Arrays;
 import java.util.Deque;
 import java.util.Iterator;
+import java.util.List;
 import java.util.Random;
+import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 import javax.swing.Timer;
@@ -46,8 +49,12 @@ public class GamePanel extends JPanel implements ActionListener
     public final int[] xOfShip = new int[GAME_UNITS];
 
     // x and y coordinates of ship bullets shot
-    public final int[] xOfBullet = new int[GAME_UNITS];
-    public final int[] yOfBullet = new int[GAME_UNITS];
+    public final int[] xOfShipBullet = new int[GAME_UNITS];
+    public final int[] yOfShipBullet = new int[GAME_UNITS];
+
+    // x and y coordinates of ship bullets shot
+    public final int[] xOfAlienBullet = new int[GAME_UNITS];
+    public final int[] yOfAlienBullet = new int[GAME_UNITS];
 
     // x and y coordinates of aliens
     public final int[] xOfAliens = new int[GAME_UNITS];
@@ -64,6 +71,7 @@ public class GamePanel extends JPanel implements ActionListener
     int lives = 3;
     int score = 0;
     int highScore = 0;
+    boolean isGameOver = false;
 
     // LOGIC VARIABLES
     // Ship:
@@ -83,9 +91,8 @@ public class GamePanel extends JPanel implements ActionListener
     // Processes
     Random random;
     Timer timer;
-    JButton replayButton;
-
     Timer alienTimer;
+    JButton replayButton;
 
     // Constants for font sizes
     private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );
@@ -104,30 +111,29 @@ public class GamePanel extends JPanel implements ActionListener
         this.setDoubleBuffered( true );
         this.setFocusable( true );
         this.addKeyListener( new MyKeyAdapter() );
+        this.setLayout( null );
 
         // Center the ship horizontally
         xOfShip[0] = ( SCREEN_WIDTH / 2 ) - ( UNIT_SIZE / 2 );
-        initializeAliens();
 
-        initUI();
+        // Initialize the replay button
+        replayButton = new JButton( "Replay" );
+        replayButton.setFont( new Font( "Futura", Font.BOLD, 20 ) );
+        replayButton.addActionListener( e -> restartGame() );
+        int buttonWidth = 150;
+        int buttonHeight = 50;
+        int buttonX = ( SCREEN_WIDTH - buttonWidth ) / 2;
+        int buttonY = SCREEN_HEIGHT - 120;
+        replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
+        replayButton.setEnabled( false );
+        replayButton.setFocusable( true );
+        this.add( replayButton );
+
+        initAliens();
         initAlienTimer();
         highScore = Helpers.initializeHighScore( highScore );
         startGame();
         Helpers.playMusic();
-    }
-
-    /**
-     * Initializes the UI components such as the replay button.
-     */
-    private void initUI()
-    {
-        replayButton = new JButton( "Replay" );
-        replayButton.setFont( MEDIUM_FONT );
-        replayButton.addActionListener( e -> restartGame() );
-        replayButton.setBounds( SCREEN_WIDTH / 2 - 50, SCREEN_HEIGHT - 60, 100, 40 );
-        replayButton.setEnabled( false );
-        replayButton.setFocusable( false );
-        this.add( replayButton );
     }
 
     private void initAlienTimer()
@@ -142,15 +148,17 @@ public class GamePanel extends JPanel implements ActionListener
         alienTimer.start();
     }
 
-    private void initializeAliens()
+    private void initAliens()
     {
         int alienSpacing = UNIT_SIZE; // Space between aliens
         int startX =
             ( SCREEN_WIDTH - ( 11 * UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2; // Center the aliens horizontally
-        int startY = 3 * UNIT_SIZE; // Starting height from top, adjust as needed
+        int startY = 3 * UNIT_SIZE;                                            // Starting height from top
 
+        // Initialize the x and y coordinates of each alien
         for ( int row = 0; row < 5; row++ )
         {
+            // Different colors for different alien types
             for ( int col = 0; col < 11; col++ )
             {
                 int index = row * 11 + col;
@@ -168,10 +176,12 @@ public class GamePanel extends JPanel implements ActionListener
     {
         replayButton.setEnabled( false );
         replayButton.setVisible( false );
+
         shipMoving = true;
         aliensMoving = true;
         alienShooting = true;
         shipShooting = true;
+
         timer = new Timer( DELAY, this );
         timer.start();
         alienTimer.start();
@@ -188,6 +198,11 @@ public class GamePanel extends JPanel implements ActionListener
         super.paintComponent( g );
         draw( g );
         UIelements( g );
+
+        if ( isGameOver )
+        {
+            drawGameOverScreen( g );
+        }
     }
 
     /**
@@ -219,7 +234,11 @@ public class GamePanel extends JPanel implements ActionListener
 
         // Draw ship bullets
         g.setColor( SHIP_BULLET_COLOR );
-        shipBullet.forEach( index -> g.fillRect( xOfBullet[index], yOfBullet[index], 5, 10 ) );
+        shipBullet.forEach( index -> g.fillRect( xOfShipBullet[index], yOfShipBullet[index], 5, 10 ) );
+
+        // Draw alien bullets
+        g.setColor( ALIEN_BULLET_COLOR );
+        alienBullet.forEach( index -> g.fillRect( xOfAlienBullet[index], yOfAlienBullet[index], 5, 10 ) );
     }
 
     /**
@@ -254,38 +273,35 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void moveAliens()
     {
-        boolean edgeReached = false;
-        int horizontalMove = UNIT_SIZE;
-        if ( aliensDirection == 'R' )
+        boolean changeDirection = false;
+
+        for ( int i = 0; i < xOfAliens.length; i++ )
         {
-            for ( int i = 0; i < xOfAliens.length; i++ )
+            if ( aliensDirection == 'R' )
             {
-                xOfAliens[i] += horizontalMove;
-                if ( xOfAliens[i] >= SCREEN_WIDTH - UNIT_SIZE )
-                {
-                    edgeReached = true;
+                xOfAliens[i] += UNIT_SIZE / 2;
+                if ( xOfAliens[i] > SCREEN_WIDTH - UNIT_SIZE )
+                { // Check right boundary
+                    changeDirection = true;
                 }
             }
-        }
-        else
-        {
-            for ( int i = 0; i < xOfAliens.length; i++ )
+            else if ( aliensDirection == 'L' )
             {
-                xOfAliens[i] -= horizontalMove;
-                if ( xOfAliens[i] <= 0 )
-                {
-                    edgeReached = true;
+                xOfAliens[i] -= UNIT_SIZE / 2;
+                if ( xOfAliens[i] < 0 )
+                { // Check left boundary
+                    changeDirection = true;
                 }
             }
         }
 
-        if ( edgeReached )
+        if ( changeDirection )
         {
-            for ( int i = 0; i < yOfAliens.length; i++ )
+            aliensDirection = aliensDirection == 'R' ? 'L' : 'R';
+            for ( int j = 0; j < xOfAliens.length; j++ )
             {
-                yOfAliens[i] += UNIT_SIZE; // Move down by one unit
+                yOfAliens[j] += UNIT_SIZE / 2; // Move all aliens down simultaneously
             }
-            aliensDirection = ( aliensDirection == 'R' ? 'L' : 'R' ); // Reverse direction
         }
     }
 
@@ -296,9 +312,9 @@ public class GamePanel extends JPanel implements ActionListener
     {
         if ( shipShooting && shipBullet.isEmpty() )
         {
-            int bulletIndex = 0;                                     // Only one bullet on screen at a time
-            xOfBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2; // Center of ship
-            yOfBullet[bulletIndex] = SCREEN_HEIGHT - 2 * UNIT_SIZE;  // Start just above the ship
+            int bulletIndex = 0;                                         // Only one bullet on screen at a time
+            xOfShipBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2; // Center of ship
+            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - 2 * UNIT_SIZE;  // Start just above the ship
             shipBullet.addLast( bulletIndex );
         }
     }
@@ -306,18 +322,60 @@ public class GamePanel extends JPanel implements ActionListener
     /**
      * Allows aliens to fire bullets downwards towards the ship.
      */
-    void bulletsFromAliens() {}
+    void bulletsFromAliens()
+    {
+        if ( alienShooting && alienBullet.isEmpty() )
+        {
+            int[] bottomAliens = new int[11]; // There are 11 columns.
+            Arrays.fill( bottomAliens, -1 );  // Fill with -1 to indicate no alien in that column yet.
+
+            // Identify the bottom-most alien in each column
+            for ( int i = 0; i < xOfAliens.length; i++ )
+            {
+                int col = i % 11; // Column of the alien
+                if ( bottomAliens[col] == -1 || yOfAliens[i] > yOfAliens[bottomAliens[col]] )
+                {
+                    bottomAliens[col] = i; // Store the index of the bottom-most alien in this column
+                }
+            }
+
+            // Now, randomly pick one of these bottom-most aliens to shoot
+            List<Integer> shooters =
+                Arrays.stream( bottomAliens ).filter( index -> index != -1 ).boxed().collect( Collectors.toList() );
+            if ( !shooters.isEmpty() )
+            {
+                int shooterIndex = shooters.get( random.nextInt( shooters.size() ) );
+                int bulletIndex = shooterIndex; // Use the same index for simplicity
+                xOfAlienBullet[bulletIndex] = xOfAliens[shooterIndex] + UNIT_SIZE / 2 - 2; // Center of alien
+                yOfAlienBullet[bulletIndex] = yOfAliens[shooterIndex] + UNIT_SIZE;         // Start just below the alien
+                alienBullet.addLast( bulletIndex );
+            }
+        }
+    }
 
     void moveBullets()
     {
-        Iterator<Integer> iterator = shipBullet.iterator();
-        while ( iterator.hasNext() )
+        // Move ship bullets
+        Iterator<Integer> shipIterator = shipBullet.iterator();
+        while ( shipIterator.hasNext() )
         {
-            int index = iterator.next();
-            yOfBullet[index] -= UNIT_SIZE; // Move bullet up
-            if ( yOfBullet[index] < 0 )
+            int index = shipIterator.next();
+            yOfShipBullet[index] -= UNIT_SIZE; // Move ship bullet up
+            if ( yOfShipBullet[index] < 0 )
             {
-                iterator.remove(); // Remove bullet if it goes off screen
+                shipIterator.remove(); // Remove ship bullet if it goes off screen
+            }
+        }
+
+        // Move alien bullets
+        Iterator<Integer> alienIterator = alienBullet.iterator();
+        while ( alienIterator.hasNext() )
+        {
+            int index = alienIterator.next();
+            yOfAlienBullet[index] += UNIT_SIZE; // Move alien bullet down
+            if ( yOfAlienBullet[index] > SCREEN_HEIGHT )
+            {
+                alienIterator.remove(); // Remove alien bullet if it goes off screen
             }
         }
     }
@@ -334,37 +392,69 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void checkCollisions()
     {
-        // Implementation details:
-        // 1. Iterate through each bullet in the shipBullet queue to check if any bullet
-        // intersects with any alien's
-        // bounding box.
-        // 2. Iterate through each bullet in the alienBullet queue to check if any
-        // bullet intersects with the ship's
-        // bounding box.
-        // 3. Update game state variables such as shipShot, alienShot, and lives based
-        // on collision detection.
-        // 4. Remove bullets and aliens as necessary based on the results of collision
-        // detection.
-        //
-        //
-        // check wether an alien was shot; eliminated:
-        // if (bulletX&Y coordinates equal alienX&Y coordinates)
-        // then alienShot = true;
-        // else
-        // alienShot = false;
-        //
-        //
-        // check wether the ship was hit; lives--:
-        //
-        // if (alientBulletX&Y coordinates equal shipX&Y coordinates)
-        // shipShot = true;
-        // lives--;
-        //
-        // if (lives == 0)
-        // gameOver();
-        //
-        // else
-        // shipShot = false;
+        // Check collisions of ship bullets with aliens
+        Iterator<Integer> shipBulletIterator = shipBullet.iterator();
+        while ( shipBulletIterator.hasNext() )
+        {
+            int index = shipBulletIterator.next();
+            Rectangle bulletRect = new Rectangle( xOfShipBullet[index], yOfShipBullet[index], 5, 10 );
+
+            for ( int i = 0; i < xOfAliens.length; i++ )
+            {
+                Rectangle alienRect = new Rectangle( xOfAliens[i], yOfAliens[i], UNIT_SIZE, UNIT_SIZE );
+                if ( bulletRect.intersects( alienRect ) )
+                {
+                    // Collision detected, remove the alien and the bullet
+                    xOfAliens[i] = -UNIT_SIZE; // Move the alien off-screen
+                    yOfAliens[i] = -UNIT_SIZE; // Move the alien off-screen
+                    shipBulletIterator.remove();
+
+                    // Score the shot
+                    if ( i < 11 )
+                    {
+                        smallAlienShot = true;
+                    }
+                    else if ( i < 33 )
+                    {
+                        mediumAlienShot = true;
+                    }
+                    else
+                    {
+                        bigAlienShot = true;
+                    }
+                    score(); // Update the score based on which alien was shot
+                    break;   // Break since bullet can only hit one alien
+                }
+            }
+        }
+
+        // Check collisions of alien bullets with the ship
+        Iterator<Integer> alienBulletIterator = alienBullet.iterator();
+        while ( alienBulletIterator.hasNext() )
+        {
+            int index = alienBulletIterator.next();
+            Rectangle bulletRect = new Rectangle( xOfAlienBullet[index], yOfAlienBullet[index], 5, 10 );
+            Rectangle shipRect = new Rectangle( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE, UNIT_SIZE, UNIT_SIZE );
+
+            if ( bulletRect.intersects( shipRect ) )
+            {
+                // Collision detected, remove the bullet and subtract a life
+                alienBulletIterator.remove();
+                lives--;
+                shipShot = true;
+
+                if ( lives <= 0 )
+                {
+                    gameOver();
+                }
+                break; // Break since one bullet can only hit the ship once
+            }
+        }
+
+        // Reset shot flags
+        smallAlienShot = false;
+        mediumAlienShot = false;
+        bigAlienShot = false;
     }
 
     /**
@@ -372,12 +462,18 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void score()
     {
-        // if (bigAlienShot)
-        // then score += 10;
-        // else if (mediumAlienShot)
-        // then score += 20;
-        // else if (smallAlienShot)
-        // then score += 30;
+        if ( smallAlienShot )
+        {
+            score += 30;
+        }
+        else if ( mediumAlienShot )
+        {
+            score += 20;
+        }
+        else if ( bigAlienShot )
+        {
+            score += 10;
+        }
     }
 
     /**
@@ -407,21 +503,28 @@ public class GamePanel extends JPanel implements ActionListener
      *
      * @param g The graphics context used for drawing.
      */
-    void gameOver( Graphics g )
+    void gameOver()
     {
+        // Set the game over state
+        isGameOver = true;
 
+        timer.stop();
         alienTimer.stop();
-        // Show score, high score, and
+
+        // Update the high score
         highScore = Math.max( highScore, score );
         Helpers.writeHighScore( highScore );
 
+        setupReplayButton();
+    }
+
+    private void drawGameOverScreen( Graphics g )
+    {
+        // Display game over text and scores
         drawCenteredText( g, "Game Over", LARGE_FONT, SCREEN_HEIGHT / 3 );
         drawCenteredText( g, "High Score: " + highScore, MEDIUM_FONT, SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() );
         drawCenteredText( g, "Score: " + score, MEDIUM_FONT,
                           SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() + MEDIUM_FONT.getSize() + 20 );
-
-        // Enable the color toggle button and replay button
-        setupReplayButton();
     }
 
     /**
@@ -453,77 +556,49 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Draws centered text on the screen.
-     *
-     * @param g    The graphics context used for drawing.
-     * @param text The text to be drawn.
-     * @param font The font used for the text.
-     * @param yPos The vertical position for the text.
-     */
-    private void drawCenteredText( Graphics g, String text, Font font, int yPos )
-    {
-        g.setFont( font );
-        g.setColor( SCORE_COLOR );
-        FontMetrics metrics = getFontMetrics( font );
-        int x = ( SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
-        g.drawString( text, x, yPos );
-    }
-
-    /**
-     * Configures and displays the replay button after a game over.
-     */
-    private void setupReplayButton()
-    {
-        int buttonWidth = 150;
-        int buttonHeight = 50;
-        int buttonX = ( SCREEN_WIDTH - buttonWidth ) / 2;
-        int buttonY = SCREEN_HEIGHT - 120;
-
-        replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
-        replayButton.setEnabled( true );
-        replayButton.setVisible( true );
-    }
-
-    /**
      * Resets the game to its initial state, ready to start anew.
      */
     void restartGame()
     {
-        // Reset the lives counter
+        isGameOver = false;
         lives = 3;
-
-        // x[] = center of screen; // Reset x position of ship to the center of the
-        // screen
-
-        // Reset game state variables
         score = 0;
+
+        // Reset bullets
         shipBullet.clear();
         alienBullet.clear();
 
-        // LOGIC VARIABLES
-        // Ship:
+        // Reset game state variables
         shipDirection = ' ';
-        shipMoving = false;
-        shipShooting = false;
-        shipShot = false;
+        directionQueue.clear();
+        shipMoving = true;
+        alienShooting = true;
+        shipShooting = true;
 
-        // Aliens:
-        aliensDirection = 'R';
-        aliensMoving = true;
-        alienShooting = false;
-        smallAlienShot = false;
-        mediumAlienShot = false;
-        bigAlienShot = false;
+        // Reinitialize alien positions
+        initAliens();
+
+        // Reset the ship's position
+        xOfShip[0] = ( SCREEN_WIDTH / 2 ) - ( UNIT_SIZE / 2 );
 
         // Disable the replay button until the game is over
         replayButton.setEnabled( false );
         replayButton.setVisible( false );
 
-        timer.stop();                     // Stop the current timer
-        timer = new Timer( DELAY, this ); // Reinitialize the timer
-        timer.start();                    // Restart the timer
+        // Start or restart the game timers
+        if ( timer != null )
+            timer.stop();
 
-        repaint(); // Repaint the game panel to refresh the screen
+        timer = new Timer( DELAY, this );
+        timer.start();
+
+        if ( alienTimer != null )
+            alienTimer.stop();
+
+        alienTimer = new Timer( ALIEN_DELAY, this );
+        alienTimer.start();
+
+        repaint();
     }
 
     /**
@@ -573,5 +648,37 @@ public class GamePanel extends JPanel implements ActionListener
             shipMoving = false;
             shipShooting = false; // Ensure we stop shooting when space is released
         }
+    }
+
+    /**
+     * Draws centered text on the screen.
+     *
+     * @param g    The graphics context used for drawing.
+     * @param text The text to be drawn.
+     * @param font The font used for the text.
+     * @param yPos The vertical position for the text.
+     */
+    private void drawCenteredText( Graphics g, String text, Font font, int yPos )
+    {
+        g.setFont( font );
+        g.setColor( SCORE_COLOR );
+        FontMetrics metrics = getFontMetrics( font );
+        int x = ( SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
+        g.drawString( text, x, yPos );
+    }
+
+    /**
+     * Configures and displays the replay button after a game over.
+     */
+    private void setupReplayButton()
+    {
+        int buttonWidth = 150;
+        int buttonHeight = 50;
+        int buttonX = ( SCREEN_WIDTH - buttonWidth ) / 2;
+        int buttonY = SCREEN_HEIGHT - 120;
+
+        replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
+        replayButton.setEnabled( true );
+        replayButton.setVisible( true );
     }
 }
