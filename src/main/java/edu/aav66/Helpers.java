@@ -12,6 +12,10 @@ import java.util.Scanner;
 import javax.imageio.ImageIO;
 import javazoom.jl.player.Player;
 
+/**
+ * This class provides utility functions to support the game,
+ * including image management, music playback, and high score handling.
+ */
 class Helpers
 {
     private static BufferedImage yellowAlien;
@@ -38,9 +42,9 @@ class Helpers
     static { loadSprites(); }
 
     /**
-     * Loads sprite images from files.
+     * Loads sprite images from files upon class loading.
+     * Images are resized according to the unit size defined in GamePanel.
      */
-
     static void loadSprites()
     {
         try
@@ -65,11 +69,11 @@ class Helpers
     }
 
     /**
-     * Resizes an image to the given width and height.
-     * @param originalImage The original image to resize.
-     * @param targetWidth The desired width.
-     * @param targetHeight The desired height.
-     * @return A new BufferedImage instance with the specified dimensions.
+     * Resizes a given image to specified width and height.
+     * @param originalImage The original image to be resized.
+     * @param targetWidth The target width of the image.
+     * @param targetHeight The target height of the image.
+     * @return A new BufferedImage of the specified size.
      */
     public static BufferedImage resizeImage( BufferedImage originalImage, int targetWidth, int targetHeight )
     {
@@ -80,19 +84,39 @@ class Helpers
         return resizedImage;
     }
 
+    /**
+     * Retrieves the UFO image.
+     * @return The UFO BufferedImage.
+     */
     public static BufferedImage getUfo() { return ufo; }
 
+    /**
+     * Retrieves the yellow alien image.
+     * @return The yellow alien BufferedImage.
+     */
     public static BufferedImage getYellowAlien() { return yellowAlien; }
 
+    /**
+     * Retrieves the green alien image.
+     * @return The green alien BufferedImage.
+     */
     public static BufferedImage getGreenAlien() { return greenAlien; }
 
+    /**
+     * Retrieves the red alien image.
+     * @return The red alien BufferedImage.
+     */
     public static BufferedImage getRedAlien() { return redAlien; }
 
+    /**
+     * Retrieves the player ship image.
+     * @return The player ship BufferedImage.
+     */
     public static BufferedImage getPlayerShip() { return playerShip; }
 
     /**
-     * Plays background music from a specified file path. This method runs
-     * the music in a separate thread to ensure it does not block the GUI thread.
+     * Plays background music continuously from a specified file path.
+     * This method uses a new thread to run the music player to ensure it does not block the GUI thread.
      */
     static void playMusic()
     {
@@ -119,10 +143,9 @@ class Helpers
     }
 
     /**
-     * Initializes high score management by setting the file path and reading the high score.
-     * This method determines the correct path for the high score file by checking if the
-     * development path exists; if not, it uses the production path. It then reads the
-     * high score from the determined file.
+     * Initializes and reads the high score from a file, determining the path based on the environment.
+     * @param highScore The current high score to initialize.
+     * @return The high score read from the file.
      */
     static int initializeHighScore( int highScore )
     {
@@ -132,10 +155,8 @@ class Helpers
     }
 
     /**
-     * Writes the current high score to the file.
-     * This method attempts to write the current high score to a designated file. If an error occurs
-     * during the file writing process, such as an IOException, the error is logged and the stack
-     * trace is printed. This ensures that the application can gracefully handle file system issues.
+     * Writes the high score to a designated file.
+     * @param highScore The high score to be written to the file.
      */
     static void writeHighScore( int highScore )
     {
@@ -151,20 +172,16 @@ class Helpers
     }
 
     /**
-     * Reads the high score from a file and returns it.
-     * This method checks if the high score file exists and reads the high score if available.
-     * If the file does not exist or no valid integer score is found, it returns 0. It handles
-     * the FileNotFoundException to ensure the application remains stable if the file is
-     * unexpectedly missing.
-     *
-     * @return The high score read from the file, or 0 if the file does not exist or contains no valid score.
+     * Reads and returns the high score from a file. If the file does not exist or contains invalid data, returns 0.
+     * @return The high score, or 0 if the file is missing or invalid.
      */
     static int readHighScore()
     {
         File file = new File( highScorePath );
         if ( !file.exists() )
+        {
             return 0;
-
+        }
         try ( Scanner scanner = new Scanner( file ) )
         {
             return scanner.hasNextInt() ? scanner.nextInt() : 0;

@@ -1,19 +1,10 @@
 package edu.aav66;
 
 import java.awt.*;
-import java.awt.Graphics;
 import java.awt.event.*;
-import java.awt.event.KeyEvent;
 import java.awt.image.BufferedImage;
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Deque;
-import java.util.HashSet;
-import java.util.Iterator;
+import java.util.*;
 import java.util.List;
-import java.util.Random;
-import java.util.Set;
 import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JPanel;
@@ -21,65 +12,96 @@ import javax.swing.Timer;
 
 /**
  * The main game panel for the Alien Invaders game.
- * This class handles game initialization, input handling, game logic, and
- * rendering.
- * It extends JPanel and implements ActionListener to handle game events and
- * actions.
+ * This class handles game initialization, input handling, game logic, and rendering.
+ * It extends JPanel and implements ActionListener to handle game events and actions.
  */
 public class GamePanel extends JPanel implements ActionListener
 {
-    // CONSTANTS
     static final int SCREEN_WIDTH = 672;  // 224 * 3
     static final int SCREEN_HEIGHT = 768; // 256 * 3
-    static final int UNIT_SIZE = 28;      // This size allows for a grid of 28 x 32
+    static final int UNIT_SIZE = 28;
     static final int GAME_UNITS = ( SCREEN_WIDTH * SCREEN_HEIGHT ) / UNIT_SIZE;
     static final int DELAY = 75;
     static int ALIEN_DELAY = 600;
     static int RESET_DELAY = 600;
 
+    // Color Constants
     static final Color BACKGROUND_COLOR = Color.black;
     static final Color SCORE_COLOR = Color.white;
     static final Color SHIP_COLOR = Color.white;
     static final Color SHIP_BULLET_COLOR = Color.gray;
+    static final Color LARGE_ALIEN_COLOR = new Color( 106, 168, 79 );
+    static final Color MEDIUM_ALIEN_COLOR = new Color( 184, 134, 11 );
+    static final Color SMALL_ALIEN_COLOR = new Color( 255, 69, 0 );
+    static final Color ALIEN_BULLET_COLOR = new Color( 199, 21, 133 );
 
+    // Bullet Dimensions
     static final int BULLET_HEIGHT = 12;
     static final int BULLET_WIDTH = 6;
 
-    // Olive green
-    static final Color LARGE_ALIEN_COLOR = new Color( 106, 168, 79 );
-    // Dark golden rod
-    static final Color MEDIUM_ALIEN_COLOR = new Color( 184, 134, 11 );
-    // Red-orange
-    static final Color SMALL_ALIEN_COLOR = new Color( 255, 69, 0 );
-    // Medium violet red
-    static final Color ALIEN_BULLET_COLOR = new Color( 199, 21, 133 );
-
-    // COORDINATE ARRAYS
-    // x coordinates of ship
-    public final int[] xOfShip = new int[GAME_UNITS];
-
-    // x and y coordinates of ship bullets shot
-    public final int[] xOfShipBullet = new int[GAME_UNITS];
-    public final int[] yOfShipBullet = new int[GAME_UNITS];
-
-    // x and y coordinates of ship bullets shot
-    public final int[] xOfAlienBullet = new int[GAME_UNITS];
-    public final int[] yOfAlienBullet = new int[GAME_UNITS];
-
-    // x and y coordinates of aliens
-    List<Integer> xOfAliens = new ArrayList<>();
-    List<Integer> yOfAliens = new ArrayList<>();
-
-    // DIRECTION QUEUE
-    private Deque<Character> directionQueue = new ArrayDeque<>();
-
-    // Using a HashSet to track which keys are currently pressed
-    private Set<Integer> pressedKeys = new HashSet<>();
-
-    // BULLET QUEUES
+    // Bullet Deques
     Deque<Integer> shipBullet = new ArrayDeque<>();
     Deque<Integer> alienBullet = new ArrayDeque<>();
 
+    // Font Constants
+    private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );    // Font for UI text
+    private static final Font LARGE_FONT = new Font( "Futura", Font.BOLD, 75 );  // Font for large text
+    private static final Font MEDIUM_FONT = new Font( "Futura", Font.BOLD, 40 ); // Font for medium text
+
+    // Ship and Bullet Coordinates
+    public final int[] xOfShip = new int[GAME_UNITS];
+
+    public final int[] xOfShipBullet = new int[GAME_UNITS];
+    public final int[] yOfShipBullet = new int[GAME_UNITS];
+
+    public final int[] xOfAlienBullet = new int[GAME_UNITS];
+    public final int[] yOfAlienBullet = new int[GAME_UNITS];
+
+    // Alien Coordinates
+    List<Integer> xOfAliens = new ArrayList<>();
+    List<Integer> yOfAliens = new ArrayList<>();
+
+    // Ship Movement Variables
+    private Deque<Character> directionQueue = new ArrayDeque<>();
+    private Set<Integer> pressedKeys = new HashSet<>();
+
+    // GAME STATE VARIABLES
+    int lives = 3;
+    int score = 0;
+    int highScore = 0;
+    int aliensKilled = 0;
+    boolean isGameOver = false;
+
+    // Ship, Alien, and UFO Attributes:
+    // Ship:
+    char shipDirection = ' ';
+    boolean shipMoving = false;
+    boolean shipShooting = false;
+    boolean shipShot = false;
+
+    // Alien:
+    char aliensDirection = 'R';
+    boolean aliensMoving = true;
+    boolean alienShooting = false;
+    boolean smallAlienShot = false;
+    boolean mediumAlienShot = false;
+    boolean bigAlienShot = false;
+
+    // UFO:
+    private int ufoX;
+    private int ufoY = 50;
+    private int ufoSpeed = 2;
+    private boolean ufoActive = false;
+    private Timer ufoTimer;
+    private final int UFO_INTERVAL = 20000; // 20 seconds
+
+    // Processes
+    Random random;
+    Timer timer;
+    Timer alienTimer;
+    JButton replayButton;
+
+    // Explosion class to handle explosion details
     class Explosion
     {
         Point location;
@@ -95,48 +117,6 @@ public class GamePanel extends JPanel implements ActionListener
     // List to hold explosion details
     List<Explosion> explosions = new ArrayList<>();
     int explosionDuration = 10; // frames
-
-    // GAME STATE VARIABLES
-    int lives = 3;
-    int score = 0;
-    int highScore = 0;
-    int aliensKilled = 0;
-    boolean isGameOver = false;
-
-    // LOGIC VARIABLES
-    // Ship:
-    char shipDirection = ' ';
-    boolean shipMoving = false;
-    boolean shipShooting = false;
-    boolean shipShot = false;
-
-    // Aliens:
-    char aliensDirection = 'R';
-    boolean aliensMoving = true;
-    boolean alienShooting = false;
-    boolean smallAlienShot = false;
-    boolean mediumAlienShot = false;
-    boolean bigAlienShot = false;
-
-    // Processes
-    Random random;
-    Timer timer;
-    Timer alienTimer;
-    JButton replayButton;
-
-    // UFO attributes
-    private int ufoX;
-    private int ufoY = 50;    // Vertical position set just below the top of the screen
-    private int ufoSpeed = 2; // Speed can be adjusted for difficulty
-    private boolean ufoActive = false;
-    private Timer ufoTimer;
-    private final int UFO_INTERVAL = 20000; // 20 seconds between appearances
-    // private final Color UFO_COLOR = new Color( 128, 0, 128 ); // Purple color
-
-    // Constants for font sizes
-    private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );
-    private static final Font LARGE_FONT = new Font( "Futura", Font.BOLD, 75 );
-    private static final Font MEDIUM_FONT = new Font( "Futura", Font.BOLD, 40 );
 
     /**
      * Constructor for GamePanel. Initializes the game environment, including UI
