@@ -26,7 +26,8 @@ class Helpers
     private static final String devPath = resourcesPath + "highscore.txt";
     private static final String prodPath = "highscore.txt";
 
-    private static final String trackPath = resourcesPath + "DRIVE(chosic.com).mp3";
+    private static final String trackPath =
+        resourcesPath + "Loyalty_Freak_Music_-_02_-_High_Technologic_Beat_Explosion(chosic.com).mp3";
 
     private static final String ufoPath = resourcesPath + "ufo.png";
     private static final String yellowAlienPath = resourcesPath + "yellow.png";
@@ -45,11 +46,16 @@ class Helpers
         try
         {
             BufferedImage originalUfo = ImageIO.read( new File( ufoPath ) );
-            ufo = resizeImage( originalUfo, GamePanel.UNIT_SIZE * 2, GamePanel.UNIT_SIZE ); // Resize UFO image
-            yellowAlien = ImageIO.read( new File( yellowAlienPath ) );
-            greenAlien = ImageIO.read( new File( greenAlienPath ) );
-            redAlien = ImageIO.read( new File( redAlienPath ) );
-            playerShip = ImageIO.read( new File( playerShipPath ) );
+            BufferedImage originalYellowAlien = ImageIO.read( new File( yellowAlienPath ) );
+            BufferedImage originalGreenAlien = ImageIO.read( new File( greenAlienPath ) );
+            BufferedImage originalRedAlien = ImageIO.read( new File( redAlienPath ) );
+            BufferedImage originalPlayerShip = ImageIO.read( new File( playerShipPath ) );
+
+            ufo = resizeImage( originalUfo, GamePanel.UNIT_SIZE * 2, GamePanel.UNIT_SIZE );
+            yellowAlien = resizeImage( originalYellowAlien, GamePanel.UNIT_SIZE, GamePanel.UNIT_SIZE );
+            greenAlien = resizeImage( originalGreenAlien, GamePanel.UNIT_SIZE, GamePanel.UNIT_SIZE );
+            redAlien = resizeImage( originalRedAlien, GamePanel.UNIT_SIZE, GamePanel.UNIT_SIZE );
+            playerShip = resizeImage( originalPlayerShip, GamePanel.UNIT_SIZE, GamePanel.UNIT_SIZE );
         }
         catch ( IOException e )
         {

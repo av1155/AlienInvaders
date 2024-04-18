@@ -31,19 +31,17 @@ public class GamePanel extends JPanel implements ActionListener
     // CONSTANTS
     static final int SCREEN_WIDTH = 672;  // 224 * 3
     static final int SCREEN_HEIGHT = 768; // 256 * 3
-    static final int UNIT_SIZE = 26;      // This size allows for a grid of 28 x 32
+    static final int UNIT_SIZE = 28;      // This size allows for a grid of 28 x 32
     static final int GAME_UNITS = ( SCREEN_WIDTH * SCREEN_HEIGHT ) / UNIT_SIZE;
     static final int DELAY = 75;
-    static int ALIEN_DELAY = 500;
-    static int RESET_DELAY = 500;
+    static int ALIEN_DELAY = 600;
+    static int RESET_DELAY = 600;
 
     static final Color BACKGROUND_COLOR = Color.black;
     static final Color SCORE_COLOR = Color.white;
     static final Color SHIP_COLOR = Color.white;
     static final Color SHIP_BULLET_COLOR = Color.gray;
 
-    static final int SHIP_HEIGHT = 30;
-    static final int SHIP_WIDTH = 60;
     static final int BULLET_HEIGHT = 12;
     static final int BULLET_WIDTH = 6;
 
@@ -420,11 +418,9 @@ public class GamePanel extends JPanel implements ActionListener
     {
         if ( shipShooting && shipBullet.isEmpty() )
         {
-            int bulletIndex = 0; // Only one bullet on screen at a time
-            // Center bullet on ship horizontally
-            xOfShipBullet[bulletIndex] = xOfShip[0] + SHIP_WIDTH / 2 - BULLET_WIDTH / 2;
-            // Start bullet just above the ship vertically
-            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - SHIP_HEIGHT - BULLET_HEIGHT;
+            int bulletIndex = shipBullet.size();
+            xOfShipBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2;
+            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - UNIT_SIZE;
             shipBullet.addLast( bulletIndex );
         }
     }
