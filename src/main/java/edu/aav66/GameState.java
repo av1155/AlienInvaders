@@ -5,6 +5,10 @@ import java.awt.event.*;
 import javax.swing.JButton;
 import javax.swing.Timer;
 
+/**
+ * This class represents the game state of the game. It contains methods for starting the game, initializing timers,
+ * handling game over and game won states, rendering UI elements, and managing the replay button.
+ */
 class GameState
 {
     static final int DELAY = 75;
@@ -40,70 +44,9 @@ class GameState
         alienTimer.start();
     }
 
-    static void initAlienTimer( GamePanel panel )
-    {
-        alienTimer = new Timer( ALIEN_DELAY, new ActionListener() {
-            @Override public void actionPerformed( ActionEvent e )
-            {
-                GamePanel.moveAliens();
-                panel.repaint();
-            }
-        } );
-        alienTimer.start();
-    }
-
-    static void initAliens()
-    {
-        int alienSpacing = GamePanel.UNIT_SIZE; // Space between aliens
-        int startX = ( GamePanel.SCREEN_WIDTH - ( 11 * GamePanel.UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2;
-        int startY = 3 * GamePanel.UNIT_SIZE;
-
-        for ( int row = 0; row < 5; row++ )
-        {
-            for ( int col = 0; col < 11; col++ )
-            {
-                GamePanel.xOfAliens.add( startX + col * ( GamePanel.UNIT_SIZE + alienSpacing ) );
-                GamePanel.yOfAliens.add( startY + row * ( GamePanel.UNIT_SIZE + alienSpacing ) );
-            }
-        }
-    }
-
-    static void initUfoTimer( GamePanel panel )
-    {
-        ufoTimer = new Timer( GamePanel.UFO_INTERVAL, e -> {
-            GamePanel.ufoX = 0;
-            GamePanel.ufoActive = true;
-            panel.repaint(); // Call repaint on the passed instance
-        } );
-        ufoTimer.start();
-    }
-
     /**
-     * Displays UI elements such as score, lives, and high score.
-     */
-    static void UIelements( Graphics g, GamePanel panel )
-    {
-        // Set the font and color for the UI text
-        g.setFont( UI_FONT );
-        g.setColor( GamePanel.SCORE_COLOR );
-
-        // Draw lives on the top left
-        g.drawString( "Lives: " + GamePanel.lives, 10, 30 );
-
-        // Draw score on the top center
-        FontMetrics metrics = panel.getFontMetrics( UI_FONT );
-        String scoreText = "Score: " + GamePanel.score;
-        g.drawString( scoreText, ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( scoreText ) ) / 2, 30 );
-
-        // Draw high score on the top right
-        String highScoreText = "High Score: " + GamePanel.highScore;
-        g.drawString( highScoreText, GamePanel.SCREEN_WIDTH - metrics.stringWidth( highScoreText ) - 10, 30 );
-    }
-
-    /**
-     * Handles game over logic, including displaying scores and high scores.
-     *
-     * @param g The graphics context used for drawing.
+     * Sets the game over state and performs necessary cleanup actions.
+     * Stops all timers, updates the high score, and sets up the replay button.
      */
     static void gameOver()
     {
@@ -126,9 +69,10 @@ class GameState
     }
 
     /**
-     * Handles game over logic, including displaying scores and high scores.
+     * Resets the game state variables and timers when the player wins the game.
+     * Increases the difficulty by reducing the alien delay.
      *
-     * @param g The graphics context used for drawing.
+     * @param panel the GamePanel object representing the game panel
      */
     static void gameWon( GamePanel panel )
     {
@@ -172,50 +116,10 @@ class GameState
         panel.repaint();
     }
 
-    static void drawGameOverScreen( Graphics g, GamePanel panel )
-    {
-        // Display game over text and scores
-        drawCenteredText( g, "Game Over", LARGE_FONT, GamePanel.SCREEN_HEIGHT / 3, panel );
-        drawCenteredText( g, "High Score: " + GamePanel.highScore, MEDIUM_FONT,
-                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize(), panel );
-        drawCenteredText( g, "Score: " + GamePanel.score, MEDIUM_FONT,
-                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() + MEDIUM_FONT.getSize() + 20, panel );
-    }
-
     /**
-     * Draws centered text on the screen.
+     * Restarts the game by resetting all game state variables and clearing lists of alien positions and bullets.
      *
-     * @param g    The graphics context used for drawing.
-     * @param text The text to be drawn.
-     * @param font The font used for the text.
-     * @param yPos The vertical position for the text.
-     */
-    private static void drawCenteredText( Graphics g, String text, Font font, int yPos, GamePanel panel )
-    {
-        g.setFont( font );
-        g.setColor( GamePanel.SCORE_COLOR );
-        FontMetrics metrics = panel.getFontMetrics( font );
-        int x = ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
-        g.drawString( text, x, yPos );
-    }
-
-    /**
-     * Configures and displays the replay button after a game over.
-     */
-    static void setupReplayButton()
-    {
-        int buttonWidth = 150;
-        int buttonHeight = 50;
-        int buttonX = ( GamePanel.SCREEN_WIDTH - buttonWidth ) / 2;
-        int buttonY = GamePanel.SCREEN_HEIGHT - 120;
-
-        replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
-        replayButton.setEnabled( true );
-        replayButton.setVisible( true );
-    }
-
-    /**
-     * Resets the game to its initial state, ready to start anew.
+     * @param panel the GamePanel object representing the game panel
      */
     static void restartGame( GamePanel panel )
     {
@@ -260,5 +164,155 @@ class GameState
         timer.start();
 
         panel.repaint();
+    }
+
+    /**
+     * Initializes a timer for moving aliens in the game panel.
+     *
+     * @param panel the GamePanel object where the aliens are to be moved
+     * @throws NullPointerException if the panel parameter is null
+     */
+    static void initAlienTimer( GamePanel panel )
+    {
+        if ( panel == null )
+            throw new NullPointerException( "GamePanel object cannot be null" );
+
+        alienTimer = new Timer( ALIEN_DELAY, new ActionListener() {
+            @Override public void actionPerformed( ActionEvent e )
+            {
+                GamePanel.moveAliens();
+                panel.repaint();
+            }
+        } );
+
+        alienTimer.start();
+    }
+
+    /**
+     * Initializes the positions of the aliens on the game panel.
+     *
+     * This method calculates the starting positions of the aliens on the game panel based on the screen width, unit
+     * size, and spacing between aliens. The aliens are arranged in a grid pattern with 11 columns and 5 rows.
+     *
+     * @param None
+     * @return None
+     */
+    static void initAliens()
+    {
+        int alienSpacing = GamePanel.UNIT_SIZE; // Space between aliens
+        int startX = ( GamePanel.SCREEN_WIDTH - ( 11 * GamePanel.UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2;
+        int startY = 3 * GamePanel.UNIT_SIZE;
+
+        for ( int row = 0; row < 5; row++ )
+        {
+            for ( int col = 0; col < 11; col++ )
+            {
+                GamePanel.xOfAliens.add( startX + col * ( GamePanel.UNIT_SIZE + alienSpacing ) );
+                GamePanel.yOfAliens.add( startY + row * ( GamePanel.UNIT_SIZE + alienSpacing ) );
+            }
+        }
+    }
+
+    /**
+     * Initializes a timer for the UFO in the game panel.
+     *
+     * This method creates a new Timer object with a specified interval for the UFO to appear on the game panel.
+     * When the timer triggers, it sets the UFO's X position to 0 and marks the UFO as active.
+     * It then calls the repaint method on the provided GamePanel instance to update the display.
+     *
+     * @param panel The GamePanel instance on which the UFO will appear and be updated.
+     * @throws NullPointerException if the panel parameter is null.
+     */
+    static void initUfoTimer( GamePanel panel )
+    {
+        if ( panel == null )
+            throw new NullPointerException( "The panel parameter cannot be null." );
+
+        ufoTimer = new Timer( GamePanel.UFO_INTERVAL, e -> {
+            GamePanel.ufoX = 0;
+            GamePanel.ufoActive = true;
+            panel.repaint(); // Call repaint on the passed instance
+        } );
+        ufoTimer.start();
+    }
+
+    /**
+     * This method is responsible for rendering the UI elements on the screen, such as lives, score, and high score.
+     *
+     * @param g The Graphics object used for rendering the UI elements.
+     * @param panel The GamePanel object that contains information about the game state.
+     */
+    static void UIelements( Graphics g, GamePanel panel )
+    {
+        // Set the font and color for the UI text
+        g.setFont( UI_FONT );
+        g.setColor( GamePanel.SCORE_COLOR );
+
+        // Draw lives on the top left
+        g.drawString( "Lives: " + GamePanel.lives, 10, 30 );
+
+        // Draw score on the top center
+        FontMetrics metrics = panel.getFontMetrics( UI_FONT );
+        String scoreText = "Score: " + GamePanel.score;
+        g.drawString( scoreText, ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( scoreText ) ) / 2, 30 );
+
+        // Draw high score on the top right
+        String highScoreText = "High Score: " + GamePanel.highScore;
+        g.drawString( highScoreText, GamePanel.SCREEN_WIDTH - metrics.stringWidth( highScoreText ) - 10, 30 );
+    }
+
+    /**
+     * Draws the game over screen with the game over text and scores.
+     *
+     * @param g the Graphics object used for drawing
+     * @param panel the GamePanel object containing game information
+     */
+    static void drawGameOverScreen( Graphics g, GamePanel panel )
+    {
+        // Display game over text and scores
+        drawCenteredText( g, "Game Over", LARGE_FONT, GamePanel.SCREEN_HEIGHT / 3, panel );
+        drawCenteredText( g, "High Score: " + GamePanel.highScore, MEDIUM_FONT,
+                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize(), panel );
+        drawCenteredText( g, "Score: " + GamePanel.score, MEDIUM_FONT,
+                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() + MEDIUM_FONT.getSize() + 20, panel );
+    }
+
+    /**
+     * Draws centered text on the screen using the specified graphics object, font, y position, and game panel.
+     *
+     * @param g the graphics object to draw the text on
+     * @param text the text to be drawn
+     * @param font the font to use for the text
+     * @param yPos the y position of the text on the screen
+     * @param panel the game panel to get font metrics from
+     */
+    private static void drawCenteredText( Graphics g, String text, Font font, int yPos, GamePanel panel )
+    {
+        g.setFont( font );
+        g.setColor( GamePanel.SCORE_COLOR );
+        FontMetrics metrics = panel.getFontMetrics( font );
+        int x = ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
+        g.drawString( text, x, yPos );
+    }
+
+    /**
+     * Sets up the replay button on the game panel.
+     * The replay button is centered horizontally at the bottom of the screen.
+     *
+     * @param buttonWidth the width of the replay button
+     * @param buttonHeight the height of the replay button
+     * @param buttonX the x-coordinate of the replay button
+     * @param buttonY the y-coordinate of the replay button
+     */
+    static void setupReplayButton()
+    {
+        int buttonWidth = 150;
+        int buttonHeight = 50;
+        int buttonX = ( GamePanel.SCREEN_WIDTH - buttonWidth ) / 2;
+        int buttonY = GamePanel.SCREEN_HEIGHT - 120;
+
+        replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
+        replayButton.setEnabled( true );
+        replayButton.setVisible( true );
     }
 }
