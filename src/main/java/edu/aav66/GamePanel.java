@@ -31,15 +31,21 @@ public class GamePanel extends JPanel implements ActionListener
     // CONSTANTS
     static final int SCREEN_WIDTH = 672;  // 224 * 3
     static final int SCREEN_HEIGHT = 768; // 256 * 3
-    static final int UNIT_SIZE = 28;      // This size allows for a grid of 28 x 32
+    static final int UNIT_SIZE = 26;      // This size allows for a grid of 28 x 32
     static final int GAME_UNITS = ( SCREEN_WIDTH * SCREEN_HEIGHT ) / UNIT_SIZE;
-    static final int DELAY = 90;
-    static final int ALIEN_DELAY = 500;
+    static final int DELAY = 75;
+    static int ALIEN_DELAY = 500;
+    static int RESET_DELAY = 500;
 
     static final Color BACKGROUND_COLOR = Color.black;
     static final Color SCORE_COLOR = Color.white;
     static final Color SHIP_COLOR = Color.white;
     static final Color SHIP_BULLET_COLOR = Color.gray;
+
+    static final int SHIP_HEIGHT = 30;
+    static final int SHIP_WIDTH = 60;
+    static final int BULLET_HEIGHT = 12;
+    static final int BULLET_WIDTH = 6;
 
     // Olive green
     static final Color LARGE_ALIEN_COLOR = new Color( 106, 168, 79 );
@@ -251,7 +257,6 @@ public class GamePanel extends JPanel implements ActionListener
         shipMoving = true;
         aliensMoving = true;
         alienShooting = true;
-        shipShooting = true;
 
         timer = new Timer( DELAY, this );
         timer.start();
@@ -299,11 +304,11 @@ public class GamePanel extends JPanel implements ActionListener
             }
             else if ( row < 3 )
             {
-                alienImage = Helpers.getRedAlien(); // Medium aliens
+                alienImage = Helpers.getGreenAlien(); // Medium aliens
             }
             else
             {
-                alienImage = Helpers.getGreenAlien(); // Large aliens
+                alienImage = Helpers.getRedAlien(); // Large aliens
             }
 
             if ( alienImage != null )
@@ -321,11 +326,13 @@ public class GamePanel extends JPanel implements ActionListener
 
         // Draw ship bullets
         g.setColor( SHIP_BULLET_COLOR );
-        shipBullet.forEach( index -> g.fillRect( xOfShipBullet[index], yOfShipBullet[index], 5, 10 ) );
+        shipBullet.forEach(
+            index -> g.fillRect( xOfShipBullet[index], yOfShipBullet[index], BULLET_WIDTH, BULLET_HEIGHT ) );
 
         // Draw alien bullets
         g.setColor( ALIEN_BULLET_COLOR );
-        alienBullet.forEach( index -> g.fillRect( xOfAlienBullet[index], yOfAlienBullet[index], 5, 10 ) );
+        alienBullet.forEach(
+            index -> g.fillRect( xOfAlienBullet[index], yOfAlienBullet[index], BULLET_WIDTH, BULLET_HEIGHT ) );
 
         // Draw explosions
         for ( Explosion exp : explosions )
@@ -376,16 +383,18 @@ public class GamePanel extends JPanel implements ActionListener
         {
             if ( aliensDirection == 'R' )
             {
-                xOfAliens.set( i, xOfAliens.get( i ) + UNIT_SIZE / 2 );
-                if ( xOfAliens.get( i ) > SCREEN_WIDTH - UNIT_SIZE )
+                xOfAliens.set( i, xOfAliens.get( i ) + UNIT_SIZE / 2 ); // Move right
+                // Check if any alien touches the right boundary
+                if ( xOfAliens.get( i ) > SCREEN_WIDTH - UNIT_SIZE - UNIT_SIZE ) // Decreased by one UNIT_SIZE
                 {
                     changeDirection = true;
                 }
             }
             else if ( aliensDirection == 'L' )
             {
-                xOfAliens.set( i, xOfAliens.get( i ) - UNIT_SIZE / 2 );
-                if ( xOfAliens.get( i ) < 0 )
+                xOfAliens.set( i, xOfAliens.get( i ) - UNIT_SIZE / 2 ); // Move left
+                // Check if any alien touches the left boundary
+                if ( xOfAliens.get( i ) < UNIT_SIZE ) // No change needed here
                 {
                     changeDirection = true;
                 }
@@ -394,11 +403,11 @@ public class GamePanel extends JPanel implements ActionListener
 
         if ( changeDirection )
         {
-            aliensDirection = aliensDirection == 'R' ? 'L' : 'R';
+            aliensDirection = ( aliensDirection == 'R' ) ? 'L' : 'R';
             for ( int i = 0; i < yOfAliens.size(); i++ )
             {
-                // Increase the downward movement
-                yOfAliens.set( i, yOfAliens.get( i ) + UNIT_SIZE );
+                // Move aliens down by UNIT_SIZE / 4 as originally planned or adjust as needed
+                yOfAliens.set( i, yOfAliens.get( i ) + UNIT_SIZE / 4 );
             }
         }
     }
@@ -406,13 +415,16 @@ public class GamePanel extends JPanel implements ActionListener
     /**
      * Allows the ship to fire bullets upwards towards the aliens.
      */
+
     void bulletsFromShip()
     {
         if ( shipShooting && shipBullet.isEmpty() )
         {
-            int bulletIndex = 0;                                         // Only one bullet on screen at a time
-            xOfShipBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2; // Center of ship
-            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - 2 * UNIT_SIZE;  // Start just above the ship
+            int bulletIndex = 0; // Only one bullet on screen at a time
+            // Center bullet on ship horizontally
+            xOfShipBullet[bulletIndex] = xOfShip[0] + SHIP_WIDTH / 2 - BULLET_WIDTH / 2;
+            // Start bullet just above the ship vertically
+            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - SHIP_HEIGHT - BULLET_HEIGHT;
             shipBullet.addLast( bulletIndex );
         }
     }
@@ -490,7 +502,6 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void checkCollisions()
     {
-
         // Total aliens are 55
         // Check collisions of ship bullets with aliens
         // Counter to check if all aliens are shot
@@ -588,27 +599,24 @@ public class GamePanel extends JPanel implements ActionListener
         mediumAlienShot = false;
         bigAlienShot = false;
 
-        // If aliens reach the ship, it's game over
+        // If aliens reach the ship or the bottom of the screen, it's game over
         for ( int i = 0; i < xOfAliens.size(); i++ )
         {
             Rectangle alienRect = new Rectangle( xOfAliens.get( i ), yOfAliens.get( i ), UNIT_SIZE, UNIT_SIZE );
             Rectangle shipRect = new Rectangle( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE, UNIT_SIZE, UNIT_SIZE );
-            if ( alienRect.intersects( shipRect ) )
-            {
-                // Trigger explosion for ship hit
-                explosions.add(
-                    new Explosion( new Point( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE ), explosionDuration ) );
-                lives = 0;
-                gameOver();
-                break;
-            }
-        }
 
-        // If aliens reach the bottom of the screen, it's game over
-        for ( int i = 0; i < xOfAliens.size(); i++ )
-        {
-            if ( yOfAliens.get( i ) >= SCREEN_HEIGHT - UNIT_SIZE )
+            // Check for collision with the ship
+            boolean isCollision = alienRect.intersects( shipRect );
+            boolean isBottom = yOfAliens.get( i ) >= SCREEN_HEIGHT - UNIT_SIZE;
+            if ( isCollision || isBottom )
             {
+                if ( isCollision )
+                {
+                    explosions.add(
+                        new Explosion( new Point( xOfAliens.get( i ), yOfAliens.get( i ) ), explosionDuration ) );
+                }
+
+                // If aliens reach the ship or the bottom of the screen, it's game over
                 lives = 0;
                 gameOver();
                 break;
@@ -622,17 +630,18 @@ public class GamePanel extends JPanel implements ActionListener
     void score()
     {
         if ( smallAlienShot )
-        {
             score += 30;
-        }
+
         else if ( mediumAlienShot )
-        {
             score += 20;
-        }
+
         else if ( bigAlienShot )
-        {
             score += 10;
-        }
+
+        // Update the high score
+        highScore = Math.max( highScore, score );
+        if ( score > highScore )
+            Helpers.writeHighScore( highScore );
     }
 
     /**
@@ -667,6 +676,8 @@ public class GamePanel extends JPanel implements ActionListener
         // Set the game over state
         isGameOver = true;
 
+        ALIEN_DELAY = RESET_DELAY;
+
         ufoTimer.stop();
         ufoActive = false;
         alienTimer.stop();
@@ -674,7 +685,8 @@ public class GamePanel extends JPanel implements ActionListener
 
         // Update the high score
         highScore = Math.max( highScore, score );
-        Helpers.writeHighScore( highScore );
+        if ( score > highScore )
+            Helpers.writeHighScore( highScore );
 
         setupReplayButton();
     }
@@ -695,6 +707,9 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void gameWon()
     {
+        // Alien delay is reduced to increase difficulty
+        ALIEN_DELAY = Math.max( 100, ALIEN_DELAY - 50 );
+
         // Reset game state variables
         aliensKilled = 0;
         shipDirection = ' ';
@@ -790,6 +805,10 @@ public class GamePanel extends JPanel implements ActionListener
         score = 0;
         aliensKilled = 0;
 
+        // Clear the alien positions lists
+        xOfAliens.clear();
+        yOfAliens.clear();
+
         // Reset bullets
         shipBullet.clear();
         alienBullet.clear();
@@ -799,7 +818,6 @@ public class GamePanel extends JPanel implements ActionListener
         directionQueue.clear();
         shipMoving = true;
         alienShooting = true;
-        shipShooting = true;
 
         // Reinitialize alien positions
         initAliens();

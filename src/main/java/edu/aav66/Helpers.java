@@ -28,10 +28,10 @@ class Helpers
 
     private static final String trackPath = resourcesPath + "DRIVE(chosic.com).mp3";
 
-    private static final String yellowAlienPath = resourcesPath + "yellow.png";
-    private static final String redAlienPath = resourcesPath + "red.png";
-    private static final String greenAlienPath = resourcesPath + "green.png";
     private static final String ufoPath = resourcesPath + "ufo.png";
+    private static final String yellowAlienPath = resourcesPath + "yellow.png";
+    private static final String greenAlienPath = resourcesPath + "green.png";
+    private static final String redAlienPath = resourcesPath + "red.png";
     private static final String playerShipPath = resourcesPath + "player.png";
 
     static { loadSprites(); }
@@ -44,12 +44,12 @@ class Helpers
     {
         try
         {
-            yellowAlien = ImageIO.read( new File( yellowAlienPath ) );
-            redAlien = ImageIO.read( new File( redAlienPath ) );
-            greenAlien = ImageIO.read( new File( greenAlienPath ) );
-            playerShip = ImageIO.read( new File( playerShipPath ) );
             BufferedImage originalUfo = ImageIO.read( new File( ufoPath ) );
             ufo = resizeImage( originalUfo, GamePanel.UNIT_SIZE * 2, GamePanel.UNIT_SIZE ); // Resize UFO image
+            yellowAlien = ImageIO.read( new File( yellowAlienPath ) );
+            greenAlien = ImageIO.read( new File( greenAlienPath ) );
+            redAlien = ImageIO.read( new File( redAlienPath ) );
+            playerShip = ImageIO.read( new File( playerShipPath ) );
         }
         catch ( IOException e )
         {
@@ -74,13 +74,13 @@ class Helpers
         return resizedImage;
     }
 
-    public static BufferedImage getYellowAlien() { return yellowAlien; }
+    public static BufferedImage getUfo() { return ufo; }
 
-    public static BufferedImage getRedAlien() { return redAlien; }
+    public static BufferedImage getYellowAlien() { return yellowAlien; }
 
     public static BufferedImage getGreenAlien() { return greenAlien; }
 
-    public static BufferedImage getUfo() { return ufo; }
+    public static BufferedImage getRedAlien() { return redAlien; }
 
     public static BufferedImage getPlayerShip() { return playerShip; }
 
