@@ -5,8 +5,9 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>edu.aav66</groupId>
-    <artifactId>2D-Game</artifactId>
+    <artifactId>AlienInvaders</artifactId>
     <version>1.0-SNAPSHOT</version>
+    <name>AlienInvaders</name>
 
     <properties>
         <maven.compiler.source>21</maven.compiler.source>
