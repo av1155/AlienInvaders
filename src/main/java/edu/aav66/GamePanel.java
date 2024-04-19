@@ -9,11 +9,6 @@ import java.util.stream.Collectors;
 import javax.swing.JButton;
 import javax.swing.JPanel;
 
-/**
- * The main game panel for the Alien Invaders game.
- * This class handles game initialization, input handling, game logic, and rendering.
- * It extends JPanel and implements ActionListener to handle game events and actions.
- */
 public class GamePanel extends JPanel implements ActionListener
 {
     static final int SCREEN_WIDTH = 672;  // 224 * 3
@@ -93,8 +88,25 @@ public class GamePanel extends JPanel implements ActionListener
     int explosionDuration = 10; // frames
 
     /**
-     * Constructor for GamePanel. Initializes the game environment, including UI
-     * components, and starts the game.
+     * Constructor for the GamePanel class.
+     * Initializes the game panel with necessary components and settings.
+     *
+     * This constructor sets up the game panel with the following components:
+     * - Random object for generating random numbers
+     * - Preferred size of the panel
+     * - Background color
+     * - Double buffering for smooth rendering
+     * - Focusable for key events
+     * - Key listener for handling key events
+     * - Layout set to null for custom positioning
+     * - Key listener setup for handling key presses and releases
+     * - Centering the ship horizontally on the screen
+     * - Replay button setup with text, font, action listener, position, and size
+     * - Initialization of aliens, alien timer, UFO timer, and high score
+     * - Starting the game and playing background music
+     *
+     * @param none
+     * @return void
      */
     public GamePanel()
     {
@@ -145,6 +157,12 @@ public class GamePanel extends JPanel implements ActionListener
         Helpers.playMusic();
     }
 
+    /**
+     * Updates the movement and shooting status of the ship based on the keys that are currently pressed.
+     * Sets the shipMoving flag to true if the left or right arrow keys are pressed.
+     * Sets the shipShooting flag to true if the space key is pressed.
+     * Sets the shipDirection to 'L' if the left arrow key is pressed, 'R' if the right arrow key is pressed.
+     */
     private void updateMovementAndShooting()
     {
         shipMoving = pressedKeys.contains( KeyEvent.VK_LEFT ) || pressedKeys.contains( KeyEvent.VK_RIGHT );
@@ -161,10 +179,12 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Custom rendering of the game's graphical elements like the ship, aliens, and
-     * bullets.
+     * This method overrides the paintComponent method from the superclass to paint the game components on the screen.
+     * It first calls the superclass's paintComponent method to clear the screen and then proceeds to draw the game
+     * elements. It also calls the GameState class to draw any UI elements on the screen. If the game is over, it
+     * displays the game over screen using the GameState class.
      *
-     * @param g The graphics context used for drawing.
+     * @param g the Graphics object used to draw on the screen
      */
     @Override public void paintComponent( Graphics g )
     {
@@ -177,9 +197,10 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Draws the game elements on the screen, such as the ship, aliens, and bullets.
+     * This method is responsible for drawing the game elements on the screen using the provided Graphics object.
+     * It draws the player's ship, aliens, UFO, ship bullets, alien bullets, and explosions.
      *
-     * @param g The graphics context used for drawing.
+     * @param g The Graphics object used for drawing on the screen
      */
     void draw( Graphics g )
     {
@@ -243,7 +264,17 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Handles movement of the ship based on the current direction.
+     * Moves the ship in the specified direction by one unit size.
+     *
+     * This method checks if the ship is currently moving and then moves the ship in the specified direction by one unit
+     * size. If the ship is moving left ('L'), the x-coordinate of the ship is decremented by the unit size. If the
+     * resulting x-coordinate is less than 0, it is set to 0 to prevent the ship from moving off the screen to the left.
+     * If the ship is moving right ('R'), the x-coordinate of the ship is incremented by the unit size. If the resulting
+     * x-coordinate is greater than the screen width minus the unit size, it is set to the screen width minus the unit
+     * size to prevent the ship from moving off the screen to the right.
+     *
+     * @throws None
+     * @return None
      */
     void moveShip()
     {
@@ -270,7 +301,14 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Handles the movement of aliens across the screen and down towards the ship.
+     * Moves the aliens in the game based on their current direction.
+     * If any alien reaches the boundary, changes the direction of all aliens and moves them down.
+     *
+     * @param xOfAliens a list of x-coordinates of the aliens
+     * @param yOfAliens a list of y-coordinates of the aliens
+     * @param aliensDirection the current direction of the aliens (either 'R' for right or 'L' for left)
+     * @param SCREEN_WIDTH the width of the game screen
+     * @param UNIT_SIZE the size of each unit in the game
      */
     static void moveAliens()
     {
@@ -310,9 +348,13 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Allows the ship to fire bullets upwards towards the aliens.
+     * Generates bullets from the ship if the ship is shooting and there are no existing ship bullets.
+     *
+     * This method checks if the ship is shooting and if the ship bullet list is empty. If both conditions are met,
+     * a new ship bullet is created at the center of the ship's x-coordinate and at the bottom of the screen.
+     *
+     * @throws IndexOutOfBoundsException if the ship bullet list is empty and shipShooting is true
      */
-
     void bulletsFromShip()
     {
         if ( shipShooting && shipBullet.isEmpty() )
@@ -325,9 +367,11 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Allows aliens to fire bullets downwards towards the ship.
+     * This method generates bullets from aliens if the alien shooting flag is true and the alien bullet list is empty.
+     * It finds the bottom aliens in each column and selects one randomly to shoot a bullet.
+     *
+     * @throws IndexOutOfBoundsException if the shooter index is out of bounds
      */
-
     void bulletsFromAliens()
     {
         if ( alienShooting && alienBullet.isEmpty() )
@@ -358,6 +402,15 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Moves the ship and alien bullets on the screen.
+     *
+     * This method iterates through the shipBullet and alienBullet lists, updating the y-coordinate of each bullet
+     * based on its direction of movement. If a bullet goes off the screen, it is removed from the respective list.
+     *
+     * @param None
+     * @return None
+     */
     void moveBullets()
     {
         // Move ship bullets
@@ -386,14 +439,12 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Checks for collisions between different game elements including ship bullets
-     * and aliens, as well as alien bullets and the ship. Upon detecting a collision
-     * between a ship bullet and an alien, the relevant alien is marked as shot,
-     * which
-     * triggers its removal from the game and an increase in the player's score.
-     * Similarly, collisions between alien bullets and the ship decrease the
-     * player's
-     * lives, potentially leading to a game over scenario.
+     * This method checks for collisions between ship bullets and aliens, as well as between alien bullets and the ship.
+     * It also handles the logic for scoring, removing aliens and bullets upon collision, triggering explosions, and
+     * updating the game state.
+     *
+     * @throws ConcurrentModificationException if there is a concurrent modification while iterating through the
+     *     shipBullet or alienBullet lists
      */
     void checkCollisions()
     {
@@ -520,7 +571,21 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Updates the score based on which aliens have been shot.
+     * Updates the player's score based on the type of alien shot down and updates the high score if necessary.
+     *
+     * If a small alien is shot down, the player's score is increased by 30 points.
+     * If a medium alien is shot down, the player's score is increased by 20 points.
+     * If a big alien is shot down, the player's score is increased by 10 points.
+     *
+     * The high score is updated to the maximum value between the current high score and the player's score.
+     * If the player's score surpasses the current high score, the high score is updated and saved to a file.
+     *
+     * @param smallAlienShot a boolean indicating if a small alien was shot down
+     * @param mediumAlienShot a boolean indicating if a medium alien was shot down
+     * @param bigAlienShot a boolean indicating if a big alien was shot down
+     * @param score the player's current score
+     * @param highScore the current high score
+     * @throws IOException if there is an error writing the high score to a file
      */
     void score()
     {
@@ -540,10 +605,11 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Handles action events during gameplay such as moving the ship or firing
-     * bullets.
+     * This method is called when an action event occurs, such as a button click or menu selection.
+     * It handles the movement of the UFO, ship, bullets, aliens, and explosions in the game.
      *
-     * @param e The action event to be processed.
+     * @param e The ActionEvent that triggered this method
+     * @return void
      */
     @Override public void actionPerformed( ActionEvent e )
     {
@@ -588,10 +654,18 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Handles key presses to control the ship's movement and firing.
+     * MyKeyAdapter is a class that extends KeyAdapter and handles key events for a game.
+     * It provides methods for handling key presses and releases to control the game's ship movement and shooting.
      */
     public class MyKeyAdapter extends KeyAdapter
     {
+        /**
+         * keyPressed is a method that is called when a key is pressed.
+         * It checks the key code and updates the direction queue accordingly.
+         * If the space key is pressed, it triggers shooting bullets from the ship.
+         *
+         * @param e The KeyEvent object representing the key event
+         */
         @Override public void keyPressed( KeyEvent e )
         {
             synchronized ( directionQueue )
@@ -624,6 +698,12 @@ public class GamePanel extends JPanel implements ActionListener
             }
         }
 
+        /**
+         * Clears the direction queue and stops the ship from moving and shooting when a key is released.
+         *
+         * @param e The KeyEvent object representing the key that was released
+         * @throws NullPointerException if the KeyEvent object is null
+         */
         @Override public void keyReleased( KeyEvent e )
         {
             synchronized ( directionQueue )
