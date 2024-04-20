@@ -14,6 +14,7 @@ class GameState
     static final int DELAY = 16;
     static int ALIEN_MOVEMENT_DELAY = 80;
     static int ALIEN_MOVEMENT_RESET_DELAY = 80;
+    static int ALIEN_MOVEMENT_GAMEWON_DELAY = ALIEN_MOVEMENT_RESET_DELAY - ( GamePanel.difficultyMultiplier * 20 );
 
     // Font Constants
     private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );    // Font for UI text
@@ -76,11 +77,13 @@ class GameState
      */
     static void gameWon( GamePanel panel )
     {
+        GamePanel.difficultyMultiplier++;
+        ALIEN_MOVEMENT_GAMEWON_DELAY = ALIEN_MOVEMENT_RESET_DELAY - ( GamePanel.difficultyMultiplier * 20 );
+
         // Alien delay is reduced to increase difficulty
-        ALIEN_MOVEMENT_DELAY = Math.max( 10, ALIEN_MOVEMENT_DELAY - 20 );
+        ALIEN_MOVEMENT_DELAY = Math.max( 20, ALIEN_MOVEMENT_GAMEWON_DELAY );
 
         // Reset game state variables
-        GamePanel.aliensKilled = 0;
         GamePanel.shipDirection = ' ';
         GamePanel.directionQueue.clear();
         GamePanel.shipMoving = true;
@@ -129,7 +132,6 @@ class GameState
         GamePanel.isGameOver = false;
         GamePanel.lives = 3;
         GamePanel.score = 0;
-        GamePanel.aliensKilled = 0;
 
         // Clear the alien positions lists
         GamePanel.xOfAliens.clear();
@@ -208,7 +210,7 @@ class GameState
         double alienSpacing = GamePanel.UNIT_SIZE / 1.5; // Space between aliens
         int startX = (int)( ( GamePanel.SCREEN_WIDTH - ( 11 * GamePanel.UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2 );
 
-        int startY = 5 * GamePanel.UNIT_SIZE; // Adjust this multiplier to change the vertical start position
+        int startY = 4 * GamePanel.UNIT_SIZE; // Adjust this multiplier to change the vertical start position
 
         for ( int row = 0; row < 5; row++ )
         {

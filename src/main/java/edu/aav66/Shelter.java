@@ -21,9 +21,10 @@ public class Shelter
         this.hitPoints = 10; // Total hit points for a shelter
     }
 
-    public void takeDamage()
+    public void takeDamage( GamePanel panel )
     {
         hitPoints--;
+        panel.repaint(); // Ensure the panel is repainted whenever a shelter takes damage
         if ( hitPoints <= 0 )
         {
             // Handle shelter destruction here

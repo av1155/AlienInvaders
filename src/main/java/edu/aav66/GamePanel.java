@@ -49,8 +49,8 @@ public class GamePanel extends JPanel implements ActionListener
     public final int[] yOfAlienBullet = new int[GAME_UNITS];
 
     private long lastAlienShotTime = System.currentTimeMillis();
-    private final long MIN_ALIEN_SHOT_STAGGER_TIME = 500;  // Minimum milliseconds to stagger shots
-    private final long MAX_ALIEN_SHOT_STAGGER_TIME = 1500; // Maximum milliseconds to stagger shots
+    static final long MIN_ALIEN_SHOT_STAGGER_TIME = 400;
+    static final long MAX_ALIEN_SHOT_STAGGER_TIME = 800;
     private final Random randomShots = new Random();
 
     // Alien Coordinates
@@ -65,8 +65,8 @@ public class GamePanel extends JPanel implements ActionListener
     static int lives = 3;
     static int score = 0;
     static int highScore = 0;
-    static int aliensKilled = 0;
     static boolean isGameOver = false;
+    static int difficultyMultiplier = 0;
 
     // Ship, Alien, and UFO Attributes:
     // Ship:
@@ -202,6 +202,7 @@ public class GamePanel extends JPanel implements ActionListener
     {
         super.paintComponent( g );
         draw( g );
+        drawShelters( g );
         GameState.UIelements( g, this );
 
         if ( isGameOver )
@@ -285,6 +286,51 @@ public class GamePanel extends JPanel implements ActionListener
             {
                 g.fillRect( shelter.bounds.x, shelter.bounds.y, shelter.bounds.width, shelter.bounds.height );
             }
+        }
+    }
+
+    void drawShelters( Graphics g )
+    {
+        for ( Shelter shelter : shelters )
+        {
+            if ( !shelter.isDestroyed() )
+            {
+                Color shelterColor;
+                if ( shelter.hitPoints > 6 )
+                {
+                    shelterColor = new Color( 34, 177, 76 ); // Healthy color
+                }
+                else if ( shelter.hitPoints > 3 )
+                {
+                    shelterColor = new Color( 139, 69, 19 ); // Moderate damage color
+                }
+                else
+                {
+                    shelterColor = new Color( 105, 105, 105 ); // Severely damaged color
+                }
+
+                g.setColor( shelterColor );
+                g.fillRect( shelter.bounds.x, shelter.bounds.y, shelter.bounds.width, shelter.bounds.height );
+
+                // Additional visual effects for damage
+                if ( shelter.hitPoints < 10 )
+                {
+                    drawCracks( g, shelter );
+                }
+            }
+        }
+    }
+
+    void drawCracks( Graphics g, Shelter shelter )
+    {
+        g.setColor( Color.DARK_GRAY );
+        // Example: Draw simple lines for cracks
+        g.drawLine( shelter.bounds.x, shelter.bounds.y, shelter.bounds.x + shelter.bounds.width,
+                    shelter.bounds.y + shelter.bounds.height );
+        if ( shelter.hitPoints < 7 )
+        {
+            g.drawLine( shelter.bounds.x, shelter.bounds.y + shelter.bounds.height,
+                        shelter.bounds.x + shelter.bounds.width, shelter.bounds.y );
         }
     }
 
@@ -394,18 +440,15 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void bulletsFromAliens()
     {
-        // Allow two bullets on the screen, but stagger the shots
-        if ( alienShooting && alienBullet.size() < 2 )
+        // Allow two bullets on the screen, staggered shots handled with time checking
+        if ( alienBullet.size() < 2 )
         {
             long currentTime = System.currentTimeMillis();
             long timeSinceLastShot = currentTime - lastAlienShotTime;
 
-            if ( timeSinceLastShot >= MIN_ALIEN_SHOT_STAGGER_TIME && timeSinceLastShot <= MAX_ALIEN_SHOT_STAGGER_TIME )
+            if ( timeSinceLastShot >= MIN_ALIEN_SHOT_STAGGER_TIME )
             {
-                // Shoot with the first available alien
                 createAlienBullet();
-
-                // Update the last shot time with a random delay within the range
                 lastAlienShotTime =
                     currentTime + getRandomDelay( MIN_ALIEN_SHOT_STAGGER_TIME, MAX_ALIEN_SHOT_STAGGER_TIME );
             }
@@ -414,36 +457,42 @@ public class GamePanel extends JPanel implements ActionListener
 
     private void createAlienBullet()
     {
-        // Find the bottom aliens in each column
         int[] bottomAliens = new int[11];
-        Arrays.fill( bottomAliens, -1 ); // Fill the array with -1 to indicate no alien in the column
+        Arrays.fill( bottomAliens, -1 ); // Initialize all columns with -1
 
-        // Find the bottom alien in each column
+        // Determine the lowest alien in each column
         for ( int i = 0; i < xOfAliens.size(); i++ )
         {
             int col = i % 11;
-            if ( yOfAliens.get( i ) >
-                 ( bottomAliens[col] == -1 ? Integer.MIN_VALUE : yOfAliens.get( bottomAliens[col] ) ) )
+            int currentY = yOfAliens.get( i );
+            if ( currentY > ( bottomAliens[col] != -1 ? yOfAliens.get( bottomAliens[col] ) : -1 ) )
             {
                 bottomAliens[col] = i;
             }
         }
 
-        // Select random shooter from the bottom-most aliens
         List<Integer> shooters =
             Arrays.stream( bottomAliens ).filter( index -> index != -1 ).boxed().collect( Collectors.toList() );
 
         if ( !shooters.isEmpty() )
         {
             int shooterIndex = shooters.get( random.nextInt( shooters.size() ) );
-            int bulletIndex = alienBullet.size(); // Use the size to determine the next index
-            xOfAlienBullet[bulletIndex] = xOfAliens.get( shooterIndex ) + UNIT_SIZE / 2 - BULLET_WIDTH / 2;
-            yOfAlienBullet[bulletIndex] = yOfAliens.get( shooterIndex ) + UNIT_SIZE;
-            alienBullet.add( bulletIndex ); // Add the bullet to the deque
+            int bulletIndex = alienBullet.isEmpty() ? 0 : Collections.max( alienBullet ) + 1;
+            if ( bulletIndex < GAME_UNITS )
+            { // Ensure we do not exceed the limit
+                xOfAlienBullet[bulletIndex] = xOfAliens.get( shooterIndex ) + UNIT_SIZE / 2 - ALIEN_BULLET_WIDTH / 2;
+                yOfAlienBullet[bulletIndex] = yOfAliens.get( shooterIndex ) + UNIT_SIZE;
+                alienBullet.add( bulletIndex );
+            }
         }
     }
 
-    private long getRandomDelay( long min, long max ) { return randomShots.nextLong( max - min + 1 ) + min; }
+    private long getRandomDelay( long min, long max )
+    {
+        // Ensure that this provides a random delay that allows two bullets to coexist
+        long delay = randomShots.nextLong( max - min + 1 ) + min;
+        return delay;
+    }
 
     // Within the GamePanel class:
     public void resetAlienShootCooldown()
@@ -463,8 +512,8 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void moveBullets()
     {
-        int shipBulletSpeed = UNIT_SIZE / 2;  // Reduced speed for ship bullets
-        int alienBulletSpeed = UNIT_SIZE / 5; // Reduced speed for alien bullets
+        int shipBulletSpeed = UNIT_SIZE / 2;
+        int alienBulletSpeed = UNIT_SIZE / 5;
 
         Iterator<Integer> shipIterator = shipBullet.iterator();
         while ( shipIterator.hasNext() )
@@ -522,25 +571,42 @@ public class GamePanel extends JPanel implements ActionListener
                     yOfAliens.remove( i );
                     shipBulletIterator.remove(); // Remove the bullet
 
-                    aliensKilled++;
-                    if ( aliensKilled == 55 )
-                    {
-                        GameState.ALIEN_MOVEMENT_DELAY = GameState.ALIEN_MOVEMENT_RESET_DELAY;
-                        GameState.gameWon( this );
-                    }
-
                     // Total aliens at the start are 55, we reduce the delay as this number decreases
                     int totalAliens = xOfAliens.size();
-                    double speedIncreaseThreshold = 55 / 1.43;
+                    if ( xOfAliens.size() == 0 )
+                    {
+                        GameState.gameWon( this );
+
+                        return;
+                    }
+
+                    double speedIncreaseThreshold = 55 / 1.58; // 34.8 aliens
 
                     // Check the current delay before potentially changing it
                     int currentDelay = GameState.ALIEN_MOVEMENT_DELAY;
 
                     // Decrease delay based on remaining aliens
-                    if ( totalAliens <= ( 55 - speedIncreaseThreshold * 1 ) )
+                    if ( totalAliens <= ( 55 - speedIncreaseThreshold ) ) // 20.2 aliens
                     {
-                        GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 5, 2 );
+                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 80 )
+                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 4, 3 );
+
+                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 60 )
+                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 3, 3 );
+
+                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 40 )
+                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 2, 3 );
+
+                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 20 )
+                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 1, 3 );
                     }
+
+                    System.out.println( "\nAliens remaining: " + xOfAliens.size() );
+
+                    // DELAY:
+                    System.out.println( "CURRENT DELAY: " + GameState.ALIEN_MOVEMENT_DELAY );
+                    System.out.println( "GAME WON DELAY: " + GameState.ALIEN_MOVEMENT_GAMEWON_DELAY );
+                    System.out.println( "DIFFICULTY MULTIPLIER: " + difficultyMultiplier );
 
                     // Apply delay change and restart timer if delay has changed
                     if ( currentDelay != GameState.ALIEN_MOVEMENT_DELAY )
@@ -655,7 +721,7 @@ public class GamePanel extends JPanel implements ActionListener
                                                           BULLET_WIDTH, BULLET_HEIGHT );
                     if ( bulletRect.intersects( shelter.bounds ) )
                     {
-                        shelter.takeDamage();
+                        shelter.takeDamage( this );
                         bulletsToRemove.add( bulletIndex );
                     }
                 }
@@ -675,7 +741,7 @@ public class GamePanel extends JPanel implements ActionListener
                                                           ALIEN_BULLET_WIDTH, ALIEN_BULLET_HEIGHT );
                     if ( bulletRect.intersects( shelter.bounds ) )
                     {
-                        shelter.takeDamage();
+                        shelter.takeDamage( this );
                         alienBulletsToRemove.add( bulletIndex );
                     }
                 }
