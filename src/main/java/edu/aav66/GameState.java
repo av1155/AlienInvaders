@@ -53,6 +53,8 @@ class GameState
     {
         // Set the game over state
         GamePanel.isGameOver = true;
+        GamePanel.difficultyMultiplier = 0;
+        ALIEN_MOVEMENT_GAMEWON_DELAY = ALIEN_MOVEMENT_RESET_DELAY - ( GamePanel.difficultyMultiplier * 20 );
 
         ALIEN_MOVEMENT_DELAY = ALIEN_MOVEMENT_RESET_DELAY;
 

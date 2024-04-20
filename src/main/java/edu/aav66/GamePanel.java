@@ -548,117 +548,163 @@ public class GamePanel extends JPanel implements ActionListener
      */
     void checkCollisions()
     {
-        // Total aliens are 55
-        // Check collisions of ship bullets with aliens
-        // Counter to check if all aliens are shot
+        boolean continueProcessing;
         Iterator<Integer> shipBulletIterator = shipBullet.iterator();
+
         while ( shipBulletIterator.hasNext() )
         {
             int index = shipBulletIterator.next();
-            Rectangle bulletRect = new Rectangle( xOfShipBullet[index], yOfShipBullet[index], 5, 10 );
+            Rectangle bulletRect =
+                new Rectangle( xOfShipBullet[index], yOfShipBullet[index], BULLET_WIDTH, BULLET_HEIGHT );
+            continueProcessing = true; // Reset flag for each bullet
 
-            for ( int i = 0; i < xOfAliens.size(); i++ )
+            for ( int i = 0; i < xOfAliens.size() && continueProcessing; i++ )
             {
                 Rectangle alienRect = new Rectangle( xOfAliens.get( i ), yOfAliens.get( i ), UNIT_SIZE, UNIT_SIZE );
                 if ( bulletRect.intersects( alienRect ) )
                 {
-                    // Trigger explosion
-                    explosions.add(
-                        new Explosion( new Point( xOfAliens.get( i ), yOfAliens.get( i ) ), explosionDuration ) );
-
-                    // Remove the alien from the list
-                    xOfAliens.remove( i );
-                    yOfAliens.remove( i );
-                    shipBulletIterator.remove(); // Remove the bullet
-
-                    // Total aliens at the start are 55, we reduce the delay as this number decreases
-                    int totalAliens = xOfAliens.size();
-                    if ( xOfAliens.size() == 0 )
-                    {
-                        GameState.gameWon( this );
-
-                        return;
-                    }
-
-                    double speedIncreaseThreshold = 55 / 1.58; // 34.8 aliens
-
-                    // Check the current delay before potentially changing it
-                    int currentDelay = GameState.ALIEN_MOVEMENT_DELAY;
-
-                    // Decrease delay based on remaining aliens
-                    if ( totalAliens <= ( 55 - speedIncreaseThreshold ) ) // 20.2 aliens
-                    {
-                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 80 )
-                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 4, 3 );
-
-                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 60 )
-                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 3, 3 );
-
-                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 40 )
-                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 2, 3 );
-
-                        if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 20 )
-                            GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 1, 3 );
-                    }
-
-                    System.out.println( "\nAliens remaining: " + xOfAliens.size() );
-
-                    // DELAY:
-                    System.out.println( "CURRENT DELAY: " + GameState.ALIEN_MOVEMENT_DELAY );
-                    System.out.println( "GAME WON DELAY: " + GameState.ALIEN_MOVEMENT_GAMEWON_DELAY );
-                    System.out.println( "DIFFICULTY MULTIPLIER: " + difficultyMultiplier );
-
-                    // Apply delay change and restart timer if delay has changed
-                    if ( currentDelay != GameState.ALIEN_MOVEMENT_DELAY )
-                    {
-                        GameState.alienTimer.setDelay( GameState.ALIEN_MOVEMENT_DELAY );
-                        GameState.alienTimer.restart();
-                    }
-
-                    // Score the shot based on alien's type before removal
-                    if ( i < 11 )
-                    {
-                        score += 30; // Assume small alien score
-                    }
-                    else if ( i < 33 )
-                    {
-                        score += 20; // Medium alien
-                    }
-                    else
-                    {
-                        score += 10; // Large alien
-                    }
-                    break; // Break since bullet can only hit one alien
+                    handleAlienCollision( i, shipBulletIterator );
+                    continueProcessing = false; // Set flag to false to skip further processing
                 }
             }
 
-            Rectangle ufoRect = new Rectangle( ufoX, ufoY, UNIT_SIZE * 2, UNIT_SIZE );
-            shipBulletIterator = shipBullet.iterator();
-            while ( shipBulletIterator.hasNext() )
+            if ( continueProcessing && ufoActive )
             {
-                index = shipBulletIterator.next();
-                bulletRect = new Rectangle( xOfShipBullet[index], yOfShipBullet[index], 5, 10 );
-
-                if ( ufoActive && bulletRect.intersects( ufoRect ) )
-                {
-                    // Trigger explosion
-                    explosions.add( new Explosion( new Point( ufoX + UNIT_SIZE, ufoY ), explosionDuration ) );
-
-                    // UFO is hit
-                    int[] possibleScores = { 50, 100, 150, 200, 300 };
-                    score += possibleScores[random.nextInt( possibleScores.length )];
-                    ufoActive = false;           // Deactivate UFO
-                    shipBulletIterator.remove(); // Remove the bullet
-                }
+                checkUfoCollision( shipBulletIterator, bulletRect );
             }
         }
 
-        // Check collisions of alien bullets with the ship
+        checkAlienBulletCollisions();
+        checkBulletCollisions();
+        checkShelterCollisions();
+    }
+
+    void checkBulletCollisions()
+    {
+        Iterator<Integer> shipBulletIterator = shipBullet.iterator();
+
+        while ( shipBulletIterator.hasNext() )
+        {
+            Integer shipIndex = shipBulletIterator.next();
+            Rectangle shipBulletRect =
+                new Rectangle( xOfShipBullet[shipIndex], yOfShipBullet[shipIndex], BULLET_WIDTH, BULLET_HEIGHT );
+
+            for ( Integer alienIndex : alienBullet )
+            {
+                Rectangle alienBulletRect = new Rectangle( xOfAlienBullet[alienIndex], yOfAlienBullet[alienIndex],
+                                                           ALIEN_BULLET_WIDTH, ALIEN_BULLET_HEIGHT );
+
+                if ( shipBulletRect.intersects( alienBulletRect ) )
+                {
+                    shipBulletIterator.remove();
+                    // Explode both bullets
+                    explosions.add( new Explosion( new Point( xOfShipBullet[shipIndex], yOfShipBullet[shipIndex] ),
+                                                   explosionDuration ) );
+                    xOfShipBullet[shipIndex] = 0;
+                    yOfShipBullet[shipIndex] = 0;
+                    break;
+                }
+            }
+        }
+    }
+
+    void handleAlienCollision( int alienIndex, Iterator<Integer> shipBulletIterator )
+    {
+        // Trigger explosion
+        explosions.add(
+            new Explosion( new Point( xOfAliens.get( alienIndex ), yOfAliens.get( alienIndex ) ), explosionDuration ) );
+
+        // Remove the alien from the list
+        xOfAliens.remove( alienIndex );
+        yOfAliens.remove( alienIndex );
+        shipBulletIterator.remove(); // Remove the bullet after processing
+
+        // Score the shot based on alien's type before removal
+        if ( alienIndex < 11 )
+        {
+            score += 30; // Assume small alien score
+        }
+        else if ( alienIndex < 33 )
+        {
+            score += 20; // Medium alien
+        }
+        else
+        {
+            score += 10; // Large alien
+        }
+
+        // Update the high score
+        highScore = Math.max( highScore, score );
+        if ( score > highScore )
+            Helpers.writeHighScore( highScore );
+
+        // Check if all aliens are defeated
+        if ( xOfAliens.isEmpty() )
+        {
+            GameState.gameWon( this );
+            return;
+        }
+
+        // Adjust game dynamics based on the number of remaining aliens
+        adjustGameDifficulty();
+    }
+
+    void adjustGameDifficulty()
+    {
+        int totalAliens = xOfAliens.size();
+        double speedIncreaseThreshold = 55 / 1.58; // Approximately 34.8 aliens
+        int currentDelay = GameState.ALIEN_MOVEMENT_DELAY;
+
+        // Decrease delay based on remaining aliens
+        if ( totalAliens <= ( 55 - speedIncreaseThreshold ) )
+        { // 20.2 aliens
+            if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 80 )
+                GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 4, 3 );
+            if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 60 )
+                GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 3, 3 );
+            if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 40 )
+                GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 2, 3 );
+            if ( GameState.ALIEN_MOVEMENT_GAMEWON_DELAY == 20 )
+                GameState.ALIEN_MOVEMENT_DELAY = Math.max( GameState.ALIEN_MOVEMENT_DELAY - 1, 3 );
+        }
+
+        System.out.println( "\nAliens remaining: " + xOfAliens.size() );
+        System.out.println( "CURRENT DELAY: " + GameState.ALIEN_MOVEMENT_DELAY );
+        System.out.println( "GAME WON DELAY: " + GameState.ALIEN_MOVEMENT_GAMEWON_DELAY );
+        System.out.println( "DIFFICULTY MULTIPLIER: " + difficultyMultiplier );
+
+        // Apply delay change and restart timer if delay has changed
+        if ( currentDelay != GameState.ALIEN_MOVEMENT_DELAY )
+        {
+            GameState.alienTimer.setDelay( GameState.ALIEN_MOVEMENT_DELAY );
+            GameState.alienTimer.restart();
+        }
+    }
+
+    void checkUfoCollision( Iterator<Integer> shipBulletIterator, Rectangle bulletRect )
+    {
+        Rectangle ufoRect = new Rectangle( ufoX, ufoY, UNIT_SIZE * 2, UNIT_SIZE );
+        if ( bulletRect.intersects( ufoRect ) )
+        {
+            // Trigger explosion
+            explosions.add( new Explosion( new Point( ufoX + UNIT_SIZE, ufoY ), explosionDuration ) );
+
+            // UFO is hit, random score for hitting UFO
+            int[] possibleScores = { 50, 100, 150, 200, 300 };
+            score += possibleScores[random.nextInt( possibleScores.length )];
+            ufoActive = false;           // Deactivate UFO
+            shipBulletIterator.remove(); // Remove the bullet
+        }
+    }
+
+    void checkAlienBulletCollisions()
+    {
         Iterator<Integer> alienBulletIterator = alienBullet.iterator();
         while ( alienBulletIterator.hasNext() )
         {
             int index = alienBulletIterator.next();
-            Rectangle bulletRect = new Rectangle( xOfAlienBullet[index], yOfAlienBullet[index], 5, 10 );
+            Rectangle bulletRect =
+                new Rectangle( xOfAlienBullet[index], yOfAlienBullet[index], ALIEN_BULLET_HEIGHT, ALIEN_BULLET_WIDTH );
             Rectangle shipRect = new Rectangle( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE, UNIT_SIZE, UNIT_SIZE );
 
             if ( bulletRect.intersects( shipRect ) )
@@ -670,118 +716,56 @@ public class GamePanel extends JPanel implements ActionListener
                 // Collision detected, remove the bullet and subtract a life
                 alienBulletIterator.remove();
                 lives--;
-                shipShot = true;
-
                 if ( lives <= 0 )
                 {
                     GameState.gameOver();
                 }
-                break; // Break since one bullet can only hit the ship once
             }
         }
+    }
 
-        // Reset shot flags
-        smallAlienShot = false;
-        mediumAlienShot = false;
-        bigAlienShot = false;
-
-        // If aliens reach the ship or the bottom of the screen, it's game over
-        for ( int i = 0; i < xOfAliens.size(); i++ )
-        {
-            Rectangle alienRect = new Rectangle( xOfAliens.get( i ), yOfAliens.get( i ), UNIT_SIZE, UNIT_SIZE );
-            Rectangle shipRect = new Rectangle( xOfShip[0], SCREEN_HEIGHT - UNIT_SIZE, UNIT_SIZE, UNIT_SIZE );
-
-            // Check for collision with the ship
-            boolean isCollision = alienRect.intersects( shipRect );
-            boolean isBottom = yOfAliens.get( i ) >= SCREEN_HEIGHT - UNIT_SIZE;
-            if ( isCollision || isBottom )
-            {
-                if ( isCollision )
-                {
-                    explosions.add(
-                        new Explosion( new Point( xOfAliens.get( i ), yOfAliens.get( i ) ), explosionDuration ) );
-                }
-
-                // If aliens reach the ship or the bottom of the screen, it's game over
-                lives = 0;
-                GameState.gameOver();
-                break;
-            }
-        }
-
-        // Check collisions of bullets with shelters
+    void checkShelterCollisions()
+    {
         List<Integer> bulletsToRemove = new ArrayList<>();
         for ( Shelter shelter : shelters )
         {
             if ( !shelter.isDestroyed() )
             {
-                for ( Integer bulletIndex : shipBullet )
+                Iterator<Integer> shipBulletIterator = shipBullet.iterator();
+                while ( shipBulletIterator.hasNext() )
                 {
+                    int bulletIndex = shipBulletIterator.next();
                     Rectangle bulletRect = new Rectangle( xOfShipBullet[bulletIndex], yOfShipBullet[bulletIndex],
                                                           BULLET_WIDTH, BULLET_HEIGHT );
                     if ( bulletRect.intersects( shelter.bounds ) )
                     {
                         shelter.takeDamage( this );
+                        explosions.add(
+                            new Explosion( new Point( xOfShipBullet[bulletIndex] - ( ( UNIT_SIZE / 3 ) + 2 ),
+                                                      yOfShipBullet[bulletIndex] ),
+                                           explosionDuration ) );
                         bulletsToRemove.add( bulletIndex );
                     }
                 }
-            }
-        }
-        shipBullet.removeAll( bulletsToRemove );
+                shipBullet.removeAll( bulletsToRemove );
 
-        // Same for alien bullets
-        List<Integer> alienBulletsToRemove = new ArrayList<>();
-        for ( Shelter shelter : shelters )
-        {
-            if ( !shelter.isDestroyed() )
-            {
-                for ( Integer bulletIndex : alienBullet )
+                Iterator<Integer> alienBulletIterator = alienBullet.iterator();
+                while ( alienBulletIterator.hasNext() )
                 {
+                    int bulletIndex = alienBulletIterator.next();
                     Rectangle bulletRect = new Rectangle( xOfAlienBullet[bulletIndex], yOfAlienBullet[bulletIndex],
                                                           ALIEN_BULLET_WIDTH, ALIEN_BULLET_HEIGHT );
                     if ( bulletRect.intersects( shelter.bounds ) )
                     {
                         shelter.takeDamage( this );
-                        alienBulletsToRemove.add( bulletIndex );
+                        explosions.add(
+                            new Explosion( new Point( xOfAlienBullet[bulletIndex], yOfAlienBullet[bulletIndex] ),
+                                           explosionDuration ) );
+                        alienBulletIterator.remove();
                     }
                 }
             }
         }
-        alienBullet.removeAll( alienBulletsToRemove );
-    }
-
-    /**
-     * Updates the player's score based on the type of alien shot down and updates the high score if necessary.
-     *
-     * If a small alien is shot down, the player's score is increased by 30 points.
-     * If a medium alien is shot down, the player's score is increased by 20 points.
-     * If a big alien is shot down, the player's score is increased by 10 points.
-     *
-     * The high score is updated to the maximum value between the current high score and the player's score.
-     * If the player's score surpasses the current high score, the high score is updated and saved to a file.
-     *
-     * @param smallAlienShot a boolean indicating if a small alien was shot down
-     * @param mediumAlienShot a boolean indicating if a medium alien was shot down
-     * @param bigAlienShot a boolean indicating if a big alien was shot down
-     * @param score the player's current score
-     * @param highScore the current high score
-     * @throws IOException if there is an error writing the high score to a file
-     */
-    void score()
-    {
-        if ( smallAlienShot )
-            score += 30;
-
-        else if ( mediumAlienShot )
-            score += 20;
-
-        else if ( bigAlienShot )
-            score += 10;
-
-        // Update the high score
-        highScore = Math.max( highScore, score );
-        if ( score > highScore )
-            Helpers.writeHighScore( highScore );
     }
 
     /**
