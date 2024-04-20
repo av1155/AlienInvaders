@@ -11,9 +11,9 @@ import javax.swing.Timer;
  */
 class GameState
 {
-    static final int DELAY = 100;
-    static int ALIEN_MOVEMENT_DELAY = 800;
-    static int ALIEN_MOVEMENT_RESET_DELAY = 800;
+    static final int DELAY = 16;
+    static int ALIEN_MOVEMENT_DELAY = 80;
+    static int ALIEN_MOVEMENT_RESET_DELAY = 80;
 
     // Font Constants
     private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );    // Font for UI text
@@ -77,7 +77,7 @@ class GameState
     static void gameWon( GamePanel panel )
     {
         // Alien delay is reduced to increase difficulty
-        ALIEN_MOVEMENT_DELAY = Math.max( 100, ALIEN_MOVEMENT_DELAY - 50 );
+        ALIEN_MOVEMENT_DELAY = Math.max( 10, ALIEN_MOVEMENT_DELAY - 20 );
 
         // Reset game state variables
         GamePanel.aliensKilled = 0;
@@ -95,6 +95,7 @@ class GameState
         // Reset bullets
         GamePanel.shipBullet.clear();
         GamePanel.alienBullet.clear();
+        panel.resetAlienShootCooldown();
 
         // Reinitialize alien positions
         initAliens();
@@ -102,6 +103,8 @@ class GameState
 
         // Reset the ship's position
         GamePanel.xOfShip[0] = ( GamePanel.SCREEN_WIDTH / 2 ) - ( GamePanel.UNIT_SIZE / 2 );
+
+        initShelters();
 
         // Update the high score
         GamePanel.highScore = Math.max( GamePanel.highScore, GamePanel.score );
@@ -135,6 +138,7 @@ class GameState
         // Reset bullets
         GamePanel.shipBullet.clear();
         GamePanel.alienBullet.clear();
+        panel.resetAlienShootCooldown();
 
         // Reset game state variables
         GamePanel.shipDirection = ' ';
@@ -151,6 +155,8 @@ class GameState
 
         // Reset the ship's position
         GamePanel.xOfShip[0] = ( GamePanel.SCREEN_WIDTH / 2 ) - ( GamePanel.UNIT_SIZE / 2 );
+
+        initShelters();
 
         // Disable the replay button until the game is over
         replayButton.setEnabled( false );
@@ -199,16 +205,17 @@ class GameState
      */
     static void initAliens()
     {
-        int alienSpacing = GamePanel.UNIT_SIZE; // Space between aliens
-        int startX = ( GamePanel.SCREEN_WIDTH - ( 11 * GamePanel.UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2;
-        int startY = 3 * GamePanel.UNIT_SIZE;
+        double alienSpacing = GamePanel.UNIT_SIZE / 1.5; // Space between aliens
+        int startX = (int)( ( GamePanel.SCREEN_WIDTH - ( 11 * GamePanel.UNIT_SIZE ) - ( 10 * alienSpacing ) ) / 2 );
+
+        int startY = 5 * GamePanel.UNIT_SIZE; // Adjust this multiplier to change the vertical start position
 
         for ( int row = 0; row < 5; row++ )
         {
             for ( int col = 0; col < 11; col++ )
             {
-                GamePanel.xOfAliens.add( startX + col * ( GamePanel.UNIT_SIZE + alienSpacing ) );
-                GamePanel.yOfAliens.add( startY + row * ( GamePanel.UNIT_SIZE + alienSpacing ) );
+                GamePanel.xOfAliens.add( (int)( startX + col * ( GamePanel.UNIT_SIZE + alienSpacing ) ) );
+                GamePanel.yOfAliens.add( (int)( startY + row * ( GamePanel.UNIT_SIZE + alienSpacing ) ) );
             }
         }
     }
@@ -270,11 +277,12 @@ class GameState
     static void drawGameOverScreen( Graphics g, GamePanel panel )
     {
         // Display game over text and scores
-        drawCenteredText( g, "Game Over", LARGE_FONT, GamePanel.SCREEN_HEIGHT / 3, panel );
+        drawCenteredText( g, "Game Over", LARGE_FONT, GamePanel.SCREEN_HEIGHT / 3, false, panel );
         drawCenteredText( g, "High Score: " + GamePanel.highScore, MEDIUM_FONT,
-                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize(), panel );
+                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize(), true, panel );
         drawCenteredText( g, "Score: " + GamePanel.score, MEDIUM_FONT,
-                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() + MEDIUM_FONT.getSize() + 20, panel );
+                          GamePanel.SCREEN_HEIGHT / 3 + LARGE_FONT.getSize() + MEDIUM_FONT.getSize() + 20, true,
+                          panel );
     }
 
     /**
@@ -286,13 +294,25 @@ class GameState
      * @param yPos the y position of the text on the screen
      * @param panel the game panel to get font metrics from
      */
-    private static void drawCenteredText( Graphics g, String text, Font font, int yPos, GamePanel panel )
+    private static void drawCenteredText( Graphics g, String text, Font font, int yPos, boolean isScore,
+                                          GamePanel panel )
     {
-        g.setFont( font );
-        g.setColor( GamePanel.SCORE_COLOR );
-        FontMetrics metrics = panel.getFontMetrics( font );
-        int x = ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
-        g.drawString( text, x, yPos );
+        if ( isScore )
+        {
+            g.setFont( font );
+            g.setColor( GamePanel.SCORE_COLOR );
+            FontMetrics metrics = panel.getFontMetrics( font );
+            int x = ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
+            g.drawString( text, x, yPos );
+        }
+        else
+        {
+            g.setFont( font );
+            g.setColor( GamePanel.GAME_OVER_COLOR );
+            FontMetrics metrics = panel.getFontMetrics( font );
+            int x = ( GamePanel.SCREEN_WIDTH - metrics.stringWidth( text ) ) / 2;
+            g.drawString( text, x, yPos );
+        }
     }
 
     /**
@@ -314,5 +334,24 @@ class GameState
         replayButton.setBounds( buttonX, buttonY, buttonWidth, buttonHeight );
         replayButton.setEnabled( true );
         replayButton.setVisible( true );
+    }
+
+    static void initShelters()
+    {
+        // Clear the current shelters list
+        GamePanel.shelters.clear();
+
+        // Create new shelters and add them to the list
+        int numberOfShelters = 4; // Number of shelters
+        int firstShelterX = ( GamePanel.SCREEN_WIDTH - ( numberOfShelters * Shelter.SHELTER_WIDTH +
+                                                         ( numberOfShelters - 1 ) * Shelter.SHELTER_PADDING ) ) /
+                            2;
+        int shelterY = GamePanel.SCREEN_HEIGHT - 3 * GamePanel.UNIT_SIZE; // Position the shelters vertically
+
+        for ( int i = 0; i < numberOfShelters; i++ )
+        {
+            GamePanel.shelters.add(
+                new Shelter( firstShelterX + i * ( Shelter.SHELTER_WIDTH + Shelter.SHELTER_PADDING ), shelterY ) );
+        }
     }
 }
