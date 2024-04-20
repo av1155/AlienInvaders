@@ -104,9 +104,6 @@ public class GamePanel extends JPanel implements ActionListener
      * - Replay button setup with text, font, action listener, position, and size
      * - Initialization of aliens, alien timer, UFO timer, and high score
      * - Starting the game and playing background music
-     *
-     * @param none
-     * @return void
      */
     public GamePanel()
     {
@@ -215,6 +212,8 @@ public class GamePanel extends JPanel implements ActionListener
         for ( int i = 0; i < xOfAliens.size(); i++ )
         {
             BufferedImage alienImage;
+
+            // Determine the type of alien based on the row
             int row = i / 11;
             if ( row == 0 )
             {
@@ -272,9 +271,6 @@ public class GamePanel extends JPanel implements ActionListener
      * If the ship is moving right ('R'), the x-coordinate of the ship is incremented by the unit size. If the resulting
      * x-coordinate is greater than the screen width minus the unit size, it is set to the screen width minus the unit
      * size to prevent the ship from moving off the screen to the right.
-     *
-     * @throws None
-     * @return None
      */
     void moveShip()
     {
@@ -314,35 +310,39 @@ public class GamePanel extends JPanel implements ActionListener
     {
         boolean changeDirection = false;
 
+        // Move aliens left or right
         for ( int i = 0; i < xOfAliens.size(); i++ )
         {
             if ( aliensDirection == 'R' )
             {
-                xOfAliens.set( i, xOfAliens.get( i ) + UNIT_SIZE / 2 ); // Move right
+                xOfAliens.set( i, xOfAliens.get( i ) + UNIT_SIZE / 4 ); // Move right
                 // Check if any alien touches the right boundary
-                if ( xOfAliens.get( i ) > SCREEN_WIDTH - UNIT_SIZE - UNIT_SIZE ) // Decreased by one UNIT_SIZE
+                if ( xOfAliens.get( i ) > SCREEN_WIDTH - ( UNIT_SIZE * 2 ) )
                 {
                     changeDirection = true;
                 }
             }
+
             else if ( aliensDirection == 'L' )
             {
-                xOfAliens.set( i, xOfAliens.get( i ) - UNIT_SIZE / 2 ); // Move left
+                xOfAliens.set( i, xOfAliens.get( i ) - UNIT_SIZE / 4 ); // Move left
                 // Check if any alien touches the left boundary
-                if ( xOfAliens.get( i ) < UNIT_SIZE ) // No change needed here
+                if ( xOfAliens.get( i ) < UNIT_SIZE )
                 {
                     changeDirection = true;
                 }
             }
         }
 
+        // Move aliens down and change direction if needed
         if ( changeDirection )
         {
+            // Change direction of all aliens
             aliensDirection = ( aliensDirection == 'R' ) ? 'L' : 'R';
             for ( int i = 0; i < yOfAliens.size(); i++ )
             {
-                // Move aliens down by UNIT_SIZE / 4 as originally planned or adjust as needed
-                yOfAliens.set( i, yOfAliens.get( i ) + UNIT_SIZE / 4 );
+                // Move aliens down by UNIT_SIZE
+                yOfAliens.set( i, yOfAliens.get( i ) + UNIT_SIZE );
             }
         }
     }
@@ -359,10 +359,10 @@ public class GamePanel extends JPanel implements ActionListener
     {
         if ( shipShooting && shipBullet.isEmpty() )
         {
-            int bulletIndex = shipBullet.size();
-            xOfShipBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2;
-            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - UNIT_SIZE;
-            shipBullet.addLast( bulletIndex );
+            int bulletIndex = shipBullet.size();                         // Get the index of the bullet
+            xOfShipBullet[bulletIndex] = xOfShip[0] + UNIT_SIZE / 2 - 2; // Center the bullet
+            yOfShipBullet[bulletIndex] = SCREEN_HEIGHT - UNIT_SIZE;      // Bottom of the screen
+            shipBullet.addLast( bulletIndex );                           // Add the bullet to the list
         }
     }
 
@@ -376,9 +376,13 @@ public class GamePanel extends JPanel implements ActionListener
     {
         if ( alienShooting && alienBullet.isEmpty() )
         {
+            // Find the bottom aliens in each column
             int[] bottomAliens = new int[11];
+
+            // Fill the array with -1 to indicate no alien in the column
             Arrays.fill( bottomAliens, -1 );
 
+            // Find the bottom alien in each column
             for ( int i = 0; i < xOfAliens.size(); i++ )
             {
                 int col = i % 11;
@@ -407,9 +411,6 @@ public class GamePanel extends JPanel implements ActionListener
      *
      * This method iterates through the shipBullet and alienBullet lists, updating the y-coordinate of each bullet
      * based on its direction of movement. If a bullet goes off the screen, it is removed from the respective list.
-     *
-     * @param None
-     * @return None
      */
     void moveBullets()
     {

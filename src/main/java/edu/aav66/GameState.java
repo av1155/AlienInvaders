@@ -11,9 +11,9 @@ import javax.swing.Timer;
  */
 class GameState
 {
-    static final int DELAY = 75;
-    static int ALIEN_DELAY = 600;
-    static int RESET_DELAY = 600;
+    static final int DELAY = 100;
+    static int ALIEN_MOVEMENT_DELAY = 800;
+    static int ALIEN_MOVEMENT_RESET_DELAY = 800;
 
     // Font Constants
     private static final Font UI_FONT = new Font( "Futura", Font.PLAIN, 20 );    // Font for UI text
@@ -53,7 +53,7 @@ class GameState
         // Set the game over state
         GamePanel.isGameOver = true;
 
-        ALIEN_DELAY = RESET_DELAY;
+        ALIEN_MOVEMENT_DELAY = ALIEN_MOVEMENT_RESET_DELAY;
 
         ufoTimer.stop();
         GamePanel.ufoActive = false;
@@ -77,7 +77,7 @@ class GameState
     static void gameWon( GamePanel panel )
     {
         // Alien delay is reduced to increase difficulty
-        ALIEN_DELAY = Math.max( 100, ALIEN_DELAY - 50 );
+        ALIEN_MOVEMENT_DELAY = Math.max( 100, ALIEN_MOVEMENT_DELAY - 50 );
 
         // Reset game state variables
         GamePanel.aliensKilled = 0;
@@ -177,7 +177,7 @@ class GameState
         if ( panel == null )
             throw new NullPointerException( "GamePanel object cannot be null" );
 
-        alienTimer = new Timer( ALIEN_DELAY, new ActionListener() {
+        alienTimer = new Timer( ALIEN_MOVEMENT_DELAY, new ActionListener() {
             @Override public void actionPerformed( ActionEvent e )
             {
                 GamePanel.moveAliens();
