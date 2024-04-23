@@ -42,8 +42,9 @@ class Helpers
     static { loadSprites(); }
 
     /**
-     * Loads sprite images from files upon class loading.
-     * Images are resized according to the unit size defined in GamePanel.
+     * Loads and resizes sprite images from files upon class loading. Each sprite is resized according to the unit size
+     * defined in GamePanel to ensure consistency with the game's scaling. If images fail to load, an error message is
+     * printed and the error is logged.
      */
     static void loadSprites()
     {
@@ -69,11 +70,11 @@ class Helpers
     }
 
     /**
-     * Resizes a given image to specified width and height.
+     * Resizes a given image to specified width and height using high-quality rendering settings.
      * @param originalImage The original image to be resized.
      * @param targetWidth The target width of the image.
      * @param targetHeight The target height of the image.
-     * @return A new BufferedImage of the specified size.
+     * @return A new BufferedImage of the specified size, resized with attention to maintaining image quality.
      */
     public static BufferedImage resizeImage( BufferedImage originalImage, int targetWidth, int targetHeight )
     {
@@ -115,8 +116,9 @@ class Helpers
     public static BufferedImage getPlayerShip() { return playerShip; }
 
     /**
-     * Plays background music continuously from a specified file path.
-     * This method uses a new thread to run the music player to ensure it does not block the GUI thread.
+     * Plays background music continuously from a specified file path. The music playback runs in a separate thread to
+     * prevent blocking the GUI thread. If there is an issue loading or playing the music file, it logs an error.
+     * The music will loop indefinitely until the application is closed or the thread is interrupted.
      */
     static void playMusic()
     {
@@ -143,9 +145,11 @@ class Helpers
     }
 
     /**
-     * Initializes and reads the high score from a file, determining the path based on the environment.
-     * @param highScore The current high score to initialize.
-     * @return The high score read from the file.
+     * Initializes and reads the high score from a file. The path of the high score file is determined based on the
+     * existence of the development path file; if not found, it defaults to the production path. It returns the high
+     * score read from the file or zero if the file is missing or invalid.
+     * @param highScore The initial high score, typically the current high score at the start.
+     * @return The high score read from the file, or 0 if the file is invalid or not found.
      */
     static int initializeHighScore( int highScore )
     {
@@ -172,8 +176,9 @@ class Helpers
     }
 
     /**
-     * Reads and returns the high score from a file. If the file does not exist or contains invalid data, returns 0.
-     * @return The high score, or 0 if the file is missing or invalid.
+     * Reads and returns the high score from the configured file path. If the file does not exist, is inaccessible, or
+     * contains invalid data, it returns 0 and logs the issue.
+     * @return The high score, or 0 if the file is missing or contains invalid data.
      */
     static int readHighScore()
     {

@@ -28,8 +28,10 @@ class GameState
     static JButton replayButton;
 
     /**
-     * Starts the game by enabling movements, setting visibility, and starting the
-     * timer.
+     * Starts the game by enabling ship and alien movements and firing capabilities, hiding the replay button,
+     * and starting the main game timer along with alien and UFO timers. This sets up the game for active gameplay.
+     *
+     * @param panel the GamePanel object representing the game panel
      */
     static void startGame( GamePanel panel )
     {
@@ -46,8 +48,8 @@ class GameState
     }
 
     /**
-     * Sets the game over state and performs necessary cleanup actions.
-     * Stops all timers, updates the high score, and sets up the replay button.
+     * Sets the game to the game over state. This method stops all game timers, resets the UFO and alien settings,
+     * updates and possibly records the high score, and displays the replay button.
      */
     static void gameOver()
     {
@@ -72,8 +74,9 @@ class GameState
     }
 
     /**
-     * Resets the game state variables and timers when the player wins the game.
-     * Increases the difficulty by reducing the alien delay.
+     * Handles the player winning the game by incrementing the difficulty, resetting game state variables,
+     * reinitializing game elements like aliens and shelters, and restarting game timers. This prepares the game
+     * for a new level with increased difficulty.
      *
      * @param panel the GamePanel object representing the game panel
      */
@@ -125,7 +128,8 @@ class GameState
     }
 
     /**
-     * Restarts the game by resetting all game state variables and clearing lists of alien positions and bullets.
+     * Restarts the game by resetting all game-related variables and settings to their initial states,
+     * clears and reinitializes game elements like aliens and shelters, and restarts the game timers.
      *
      * @param panel the GamePanel object representing the game panel
      */
@@ -177,7 +181,8 @@ class GameState
     }
 
     /**
-     * Initializes a timer for moving aliens in the game panel.
+     * Initializes and starts a timer that controls the periodic movement of aliens across the GamePanel.
+     * This contributes to the dynamic gameplay by enabling consistent alien advancement.
      *
      * @param panel the GamePanel object where the aliens are to be moved
      * @throws NullPointerException if the panel parameter is null

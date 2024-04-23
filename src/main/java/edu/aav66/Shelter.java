@@ -3,7 +3,7 @@ package edu.aav66;
 import java.awt.Rectangle;
 
 /**
- * Shelter
+ * Shelter represents a protective structure in a game environment that can take damage and be destroyed.
  */
 public class Shelter
 {
@@ -15,12 +15,22 @@ public class Shelter
     Rectangle bounds;
     int hitPoints;
 
+    /**
+     * Constructs a Shelter object with the specified coordinates.
+     * @param x the x-coordinate of the shelter
+     * @param y the y-coordinate of the shelter
+     */
     public Shelter( int x, int y )
     {
         this.bounds = new Rectangle( x, y, SHELTER_WIDTH, SHELTER_HEIGHT );
         this.hitPoints = 10; // Total hit points for a shelter
     }
 
+    /**
+     * Reduces the hit points of the shelter by 1 and repaints the game panel.
+     * If the hit points reach 0 or below, the shelter is considered destroyed.
+     * @param panel the GamePanel object to repaint
+     */
     public void takeDamage( GamePanel panel )
     {
         hitPoints--;
@@ -31,5 +41,10 @@ public class Shelter
         }
     }
 
+    /**
+     * Checks if the object is destroyed based on its hit points.
+     *
+     * @return true if the object is destroyed (hit points <= 0), false otherwise
+     */
     public boolean isDestroyed() { return hitPoints <= 0; }
 }
