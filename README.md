@@ -1,6 +1,6 @@
 # AlienInvaders
 
-AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by the classic Space Invaders space shooting game. The game features a variety of alien enemies, a player-controlled spaceship, and challenging gameplay mechanics, including UFOs, multiple alien types, and dynamic scoring.
+AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by the classic Space Invaders space shooting game. The game features a variety of alien enemies, a player-controlled spaceship, and challenging gameplay mechanics, including UFOs, multiple alien types, dynamic scoring, and enhanced interactive barriers for strategic gameplay.
 
 ## Getting Started
 
@@ -18,7 +18,7 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 1. Clone the repository or download the source code:
 
     ```
-    git clone https://github.com/yourusername/AlienInvaders.git
+    git clone https://github.com/av1155/AlienInvaders.git
 
     ```
 
@@ -33,6 +33,9 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 -   A UFO that randomly crosses the screen, providing bonus opportunities when hit.
 -   High score tracking with local persistence.
 -   Replay functionality to restart the game after a game over.
+-   Dynamic barriers that provide both cover and strategic gameplay elements.
+-   Enhanced frame rate and movement speeds for all objects, improving game fluidity.
+-   Aliens can now shoot two bullets at a time, increasing the game's difficulty.
 
 ## Controls
 
@@ -56,7 +59,7 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 
 ## Development
 
-This game is developed using Java Swing for the GUI components and graphics handling. The main gameplay mechanics are handled in the `GamePanel` class, with helper classes for managing game state, alien movements, and utility functions.
+This game is developed using Java Swing for the GUI components and graphics handling. The main gameplay mechanics are handled in the `GamePanel` class, with helper classes for managing game state, alien movements, and utility functions. Recent updates have greatly improved the JavaDoc documentation and refactored the codebase for better maintainability.
 
 ## Contributions
 
