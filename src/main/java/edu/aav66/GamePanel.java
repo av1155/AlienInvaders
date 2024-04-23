@@ -101,22 +101,11 @@ public class GamePanel extends JPanel implements ActionListener
     static List<Shelter> shelters = new ArrayList<>();
 
     /**
-     * Constructor for the GamePanel class.
-     * Initializes the game panel with necessary components and settings.
-     *
-     * This constructor sets up the game panel with the following components:
-     * - Random object for generating random numbers
-     * - Preferred size of the panel
-     * - Background color
-     * - Double buffering for smooth rendering
-     * - Focusable for key events
-     * - Key listener for handling key events
-     * - Layout set to null for custom positioning
-     * - Key listener setup for handling key presses and releases
-     * - Centering the ship horizontally on the screen
-     * - Replay button setup with text, font, action listener, position, and size
-     * - Initialization of aliens, alien timer, UFO timer, and high score
-     * - Starting the game and playing background music
+     * Constructor for the GamePanel class. Initializes the game panel with necessary components.
+     * This constructor sets up the game panel with a random object for number generation, sets the preferred size,
+     * background color, enables double buffering for smooth rendering, and makes the panel focusable.
+     * It also sets up key listeners for handling game controls, centers the ship, initializes game elements like
+     * aliens, shelters, and the replay button, and starts the game timers.
      */
     public GamePanel()
     {
@@ -170,10 +159,8 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Updates the movement and shooting status of the ship based on the keys that are currently pressed.
-     * Sets the shipMoving flag to true if the left or right arrow keys are pressed.
-     * Sets the shipShooting flag to true if the space key is pressed.
-     * Sets the shipDirection to 'L' if the left arrow key is pressed, 'R' if the right arrow key is pressed.
+     * Updates the movement and shooting status of the ship based on currently pressed keys.
+     * Sets the ship's moving and shooting flags and updates the direction to left or right accordingly.
      */
     private void updateMovementAndShooting()
     {
@@ -289,6 +276,13 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Draws the shelters on the screen with different colors based on their health status.
+     * If a shelter is not destroyed, it will be drawn with a color representing its health status.
+     * Additionally, if a shelter has less than 10 hit points, cracks will be drawn on it for visual effect.
+     *
+     * @param g the Graphics object used for drawing on the screen
+     */
     void drawShelters( Graphics g )
     {
         for ( Shelter shelter : shelters )
@@ -321,6 +315,12 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Draws cracks on the shelter using the given Graphics object.
+     *
+     * @param g the Graphics object to use for drawing
+     * @param shelter the Shelter object representing the shelter to draw cracks on
+     */
     void drawCracks( Graphics g, Shelter shelter )
     {
         g.setColor( Color.DARK_GRAY );
@@ -414,12 +414,8 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * Generates bullets from the ship if the ship is shooting and there are no existing ship bullets.
-     *
-     * This method checks if the ship is shooting and if the ship bullet list is empty. If both conditions are met,
-     * a new ship bullet is created at the center of the ship's x-coordinate and at the bottom of the screen.
-     *
-     * @throws IndexOutOfBoundsException if the ship bullet list is empty and shipShooting is true
+     * Generates a bullet from the ship if it is currently shooting and there are no existing bullets.
+     * The bullet is created at the center of the ship's x-coordinate and at the bottom of the screen.
      */
     void bulletsFromShip()
     {
@@ -433,10 +429,8 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * This method generates bullets from aliens if the alien shooting flag is true and the alien bullet list is empty.
-     * It finds the bottom aliens in each column and selects one randomly to shoot a bullet.
-     *
-     * @throws IndexOutOfBoundsException if the shooter index is out of bounds
+     * Generates bullets from aliens based on a staggered timing mechanism if the alien shooting flag is true.
+     * Selects a random alien from the lowest in each column to shoot if fewer than two alien bullets are on screen.
      */
     void bulletsFromAliens()
     {
@@ -455,6 +449,15 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Creates a bullet for the alien to shoot.
+     *
+     * This method determines the lowest alien in each column and selects one of them as the shooter.
+     * It then calculates the position of the bullet based on the shooter's position and adds it to the list of alien
+     * bullets.
+     *
+     * @throws IndexOutOfBoundsException if the bullet index exceeds the limit of GAME_UNITS
+     */
     private void createAlienBullet()
     {
         int[] bottomAliens = new int[11];
@@ -487,6 +490,13 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Generates a random delay between the specified minimum and maximum values.
+     *
+     * @param min the minimum delay value
+     * @param max the maximum delay value
+     * @return a random delay value between min and max
+     */
     private long getRandomDelay( long min, long max )
     {
         // Ensure that this provides a random delay that allows two bullets to coexist
@@ -494,12 +504,17 @@ public class GamePanel extends JPanel implements ActionListener
         return delay;
     }
 
-    // Within the GamePanel class:
+    /**
+     * Resets the cooldown for alien shooting.
+     *
+     * If you're keeping track of the last shot time to manage shooting frequency,
+     * this method updates the lastAlienShotTime to the current system time.
+     *
+     * If there's a stagger time or delay for alien shots, this method resets it to a default value.
+     */
     public void resetAlienShootCooldown()
     {
-        // If you're keeping track of the last shot time to manage shooting frequency
         this.lastAlienShotTime = System.currentTimeMillis();
-
         // If there's a stagger time or delay for alien shots, reset that too
         // this.alienShootStaggerTime = someDefaultValue;
     }
@@ -579,6 +594,12 @@ public class GamePanel extends JPanel implements ActionListener
         checkShelterCollisions();
     }
 
+    /**
+     * Checks for collisions between ship bullets and alien bullets.
+     * If a collision is detected, removes the ship bullet, creates an explosion, and resets the ship bullet's position.
+     *
+     * @throws NoSuchElementException if shipBulletIterator is empty
+     */
     void checkBulletCollisions()
     {
         Iterator<Integer> shipBulletIterator = shipBullet.iterator();
@@ -608,6 +629,16 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Handles the collision between the player's ship bullet and an alien at the specified index.
+     * Triggers an explosion at the alien's position, removes the alien from the list of aliens,
+     * removes the ship bullet from the iterator, scores the shot based on the alien's type,
+     * updates the player's score and high score, checks if all aliens are defeated, and adjusts
+     * the game difficulty based on the number of remaining aliens.
+     *
+     * @param alienIndex The index of the alien that was hit by the player's ship bullet
+     * @param shipBulletIterator An iterator for the list of ship bullets to remove the bullet after processing
+     */
     void handleAlienCollision( int alienIndex, Iterator<Integer> shipBulletIterator )
     {
         // Trigger explosion
@@ -649,6 +680,15 @@ public class GamePanel extends JPanel implements ActionListener
         adjustGameDifficulty();
     }
 
+    /**
+     * Adjusts the game difficulty based on the number of remaining aliens.
+     * Decreases the alien movement delay if the total number of aliens is less than a certain threshold.
+     * Updates the alien movement delay and restarts the timer if the delay has changed.
+     *
+     * @param xOfAliens a list containing the x-coordinates of all aliens
+     * @param difficultyMultiplier a multiplier to adjust the difficulty of the game
+     * @throws IllegalArgumentException if xOfAliens is null or empty
+     */
     void adjustGameDifficulty()
     {
         int totalAliens = xOfAliens.size();
@@ -681,6 +721,14 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Checks for collision between the ship's bullets and the UFO.
+     * If a collision is detected, triggers an explosion, updates the score, deactivates the UFO,
+     * and removes the bullet.
+     *
+     * @param shipBulletIterator An iterator for the ship's bullets
+     * @param bulletRect The rectangle representing the ship's bullet
+     */
     void checkUfoCollision( Iterator<Integer> shipBulletIterator, Rectangle bulletRect )
     {
         Rectangle ufoRect = new Rectangle( ufoX, ufoY, UNIT_SIZE * 2, UNIT_SIZE );
@@ -697,6 +745,11 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Checks for collision between the alien's bullets and the ship.
+     * If a collision is detected, triggers an explosion for the ship, removes the bullet,
+     * subtracts a life, and triggers game over if no lives remain.
+     */
     void checkAlienBulletCollisions()
     {
         Iterator<Integer> alienBulletIterator = alienBullet.iterator();
@@ -724,6 +777,15 @@ public class GamePanel extends JPanel implements ActionListener
         }
     }
 
+    /**
+     * Checks for collisions between bullets and shelters, and updates the game state accordingly.
+     *
+     * This method iterates through each shelter in the game and checks for collisions with both ship bullets and alien
+     * bullets. If a collision is detected, the shelter takes damage and an explosion is created at the location of the
+     * bullet.
+     *
+     * @throws NullPointerException if any of the required objects (shelters, shipBullet, alienBullet) are null
+     */
     void checkShelterCollisions()
     {
         List<Integer> bulletsToRemove = new ArrayList<>();
@@ -769,11 +831,8 @@ public class GamePanel extends JPanel implements ActionListener
     }
 
     /**
-     * This method is called when an action event occurs, such as a button click or menu selection.
-     * It handles the movement of the UFO, ship, bullets, aliens, and explosions in the game.
-     *
-     * @param e The ActionEvent that triggered this method
-     * @return void
+     * Responds to action events within the game such as timer ticks, handling movements of the UFO, ship, and bullets.
+     * Manages alien movements and firing, checks for collisions, and updates the state of explosions.
      */
     @Override public void actionPerformed( ActionEvent e )
     {
