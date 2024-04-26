@@ -24,7 +24,8 @@ class Helpers
     private static BufferedImage ufo;
     private static BufferedImage playerShip;
 
-    private static final String resourcesPath = "/Users/andreaventi/Developer/AlienInvaders/src/main/resources/";
+    private static final String resourcesPath =
+        "/Users/andreaventi/Developer/GameDev/AlienInvaders/src/main/resources/";
 
     private static String highScorePath;
     private static final String devPath = resourcesPath + "highscore.txt";
