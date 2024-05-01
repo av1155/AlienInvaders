@@ -27,15 +27,16 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 
 ## Features
 
--   Multiple types of aliens with different behaviors and scoring values.
+-   Multiple types of aliens with scoring values.
 -   Player-controlled spaceship capable of moving left, right, and shooting.
 -   Explosions that graphically represent the destruction of aliens and the player's ship.
+-   Dynamic barriers that provide both cover and strategic gameplay elements.
 -   A UFO that randomly crosses the screen, providing bonus opportunities when hit.
 -   High score tracking with local persistence.
 -   Replay functionality to restart the game after a game over.
--   Dynamic barriers that provide both cover and strategic gameplay elements.
 -   Enhanced frame rate and movement speeds for all objects, improving game fluidity.
--   Aliens can now shoot two bullets at a time, increasing the game's difficulty.
+-   Aliens can shoot two bullets at a time, increasing the game's difficulty.
+-   Aliens movement speed increases depending on several factors.
 
 ## Controls
 
@@ -46,7 +47,7 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 ## How to Play
 
 -   Destroy all aliens before they can reach the bottom of the screen.
--   Avoid or shoot down bullets from alien ships.
+-   Avoid bullets from alien ships, or alien ships entirely.
 -   Score points by destroying aliens and hitting the UFO.
 -   Keep playing to try and beat your high score!
 
