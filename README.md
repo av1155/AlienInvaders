@@ -1,6 +1,6 @@
-# AlienInvaders
+# Space Invaders Clone
 
-AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by the classic Space Invaders space shooting game. The game features a variety of alien enemies, a player-controlled spaceship, and challenging gameplay mechanics, including UFOs, multiple alien types, dynamic scoring, and enhanced interactive barriers for strategic gameplay.
+Space Invaders Clone is a fast-paced arcade-style game developed in Java, inspired by the classic Space Invaders space shooting game. The game features a variety of alien enemies, a player-controlled spaceship, and challenging gameplay mechanics, including UFOs, multiple alien types, dynamic scoring, and enhanced interactive barriers for strategic gameplay.
 
 ## Getting Started
 
@@ -11,14 +11,14 @@ AlienInvaders is a fast-paced arcade-style game developed in Java, inspired by t
 
 ### Installation
 
-1. Install the JAR file from the releases section, and run it!
+1. Download the JAR file from the releases section, and run it!
 
     OR
 
 1. Clone the repository or download the source code:
 
     ```
-    git clone https://github.com/av1155/AlienInvaders.git
+    git clone https://github.com/av1155/SpaceInvaders.git
 
     ```
 
